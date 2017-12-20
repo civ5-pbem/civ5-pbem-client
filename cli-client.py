@@ -36,7 +36,7 @@ if config.has_option(interface_section, 'username'):
     username = config[interface_section]['username']
 else:
     username = input("Choose a username: ")
-    config[interface_section]['username'] = email
+    config[interface_section]['username'] = username
     changed_config = True
 
 if config.has_option(interface_section, 'access_token'):
