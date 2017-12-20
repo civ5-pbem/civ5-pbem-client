@@ -3,8 +3,13 @@ from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
+
 config = ConfigParser()
 config.read('config.ini')
+
+#
+# Registration and credentials
+#
 
 interface_section = 'Interface Settings'
 changed_config = False
@@ -73,6 +78,8 @@ except requests.exceptions.ConnectionError:
     exit()
 
 if changed_config:
-    print("Saving changes to 'config.ini'")
+    print("Saving changes to config.ini")
     with open("config.ini", "w") as configfile:
         config.write(configfile)
+
+
