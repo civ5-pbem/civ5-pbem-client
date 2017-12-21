@@ -14,5 +14,6 @@ def register_account(server_address, username, email):
         urljoin(server_address,"/user-accounts/register"),
         json={'email':email, 'username':username})
     if register_request.status_code != 200:
+        # TODO: A non-200 code could mean a lot of things
         raise AccountTakenError
 
