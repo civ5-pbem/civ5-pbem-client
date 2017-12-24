@@ -56,7 +56,7 @@ try:
         print("Saving interface credentials to config")
         interface.save_config(config_file)
     try:
-        credentials = interface.request_credentials()
+        credentials = account.request_credentials(interface)
         print("Configured as", credentials.get('email'))
     except:
         print("Error: Failed to retrieve credentials")

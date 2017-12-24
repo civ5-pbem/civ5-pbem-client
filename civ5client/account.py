@@ -17,3 +17,10 @@ def register_account(server_address, username, email):
         # TODO: A non-200 code could mean a lot of things
         raise AccountTakenError
 
+def request_credentials(interface):
+    """Requests credentials given by a specific Interface, i.e.
+    related to a specific access token on a server.
+    """
+    request = interface.get_request("/user-accounts/current")
+    return request.json()
+

@@ -60,11 +60,3 @@ class Interface():
         return requests.get(
             urljoin(self.server_address, path), 
             headers={"Access-Token":self.access_token})
-
-    def request_credentials(interface):
-        """Requests credentials given by a specific Interface, i.e.
-        related to a specific access token on a server.
-        """
-        request = interface.get_request("/user-accounts/current")
-        return request.json()
-
