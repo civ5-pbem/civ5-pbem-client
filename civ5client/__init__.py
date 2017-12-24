@@ -47,12 +47,13 @@ class Interface():
     def save_config(self, config_file_name):
         """Saves the Interface information in a config file."""
         config = ConfigParser()
-        config.add_section('Interface Settings')
+        config.read(config_file_name)
+        if not config.has_section('Interface Settings'):
+            config.add_section('Interface Settings')
         config['Interface Settings']['server_address'] = self.server_address
         config['Interface Settings']['access_token'] = self.access_token
         with open(config_file_name, 'w') as config_file:
             config.write(config_file)
-
 
     def get_request(self, path):
         ###TODO: headers? data? anything? No real activities to perform for now
