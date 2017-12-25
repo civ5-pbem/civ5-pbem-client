@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to make full use of the civ5client package to play Civilizations 5 in 
+Script to make full use of the civ5client package to play Civilization 5 in 
 a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 
 Usage:
