@@ -11,6 +11,6 @@ def start_new_game(interface, game_name, game_description, map_size):
     if map_size not in allowed_sizes:
         raise ValueError("Wrong map size")
     json = {'gameName':game_name,
-            'gameDescription':game_name,
+            'gameDescription':game_description,
             'mapSize':map_size}
     interface.post_request('/games/new-game', json)
