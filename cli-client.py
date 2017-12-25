@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """
-This script allows to make full use of the civ5client package
-through the command line. It is (TODO: not yet) able to:
-    register an account
-    list existing games
-    start a new game
-    respond to invites
-    download/upload a save to the server to perform a turn
+Script to make full use of the civ5client package to play Civilizations 5 in 
+a play-by-email fashion in connection with a dedicated civ5-pbem-server.
+
+Usage:
+    cli-client.py init
+    cli-client.py (-h | --help)
+    cli-client.py --version
+
+Commands:
+    -h --help   Show this
+    --version   Show version
+    init        Checks configuration and completes it if incomplete. 
+                It is ran whenever any other command is used regardless.
 """
 
+from docopt import docopt
 from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
@@ -16,7 +23,8 @@ import requests
 import civ5client
 from civ5client import account, saves, InvalidConfigurationError
 
-
+opts = docopt(__doc__, help=True, version=("civ5client command line interface "
+                                           "pre-alpha"))
 
 config_file = 'config.ini'
 
