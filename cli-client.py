@@ -53,7 +53,8 @@ try:
     try:
         interface = civ5client.Interface.from_config(config_file)
     except InvalidConfigurationError:
-        print("Missing or invalid config; creating new one")
+        if not opts['init']:
+            print("Missing or invalid config; creating new one")
         address = input("Write the server address: ")
         address = civ5client.parse_address(address)
         registered = yes_no_question(("Do you have an access token (i.e. an"
@@ -100,11 +101,14 @@ try:
     #
     if opts['new-game']:
         try:
-            print("Sending a new game request")
-            games.start_new_game(interface,
+            print("Attempting to send a new game request")
+            response = games.start_new_game(interface,
                                  opts['<game-name>'],
                                  opts['<game-description>'],
                                  opts['<map-size>'].upper())
+            if response.status_code == 200:
+                print("Game started successfully with id", 
+                      response.json()['id'])
         except ValueError:
             print("Error: Wrong map size. Check -h for possible")
             exit()
