@@ -8,11 +8,8 @@ information, such as whose turn it is or if anyone lost.
 # without him this module would have taken an insufferably long time 
 # to research and write
 
-# TODO: Needed stuff
-# who died - block 8, 4 ints from the end > an int
-# whose turn it is - block 3 > ??
-# turn number - after 8 bytes, 2 strings > an int
-# time played - encrypted
+# TODO:
+# time played - compressed
 
 from bitstring import ConstBitStream
 
