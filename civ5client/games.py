@@ -14,3 +14,15 @@ def start_new_game(interface, game_name, game_description, map_size):
             'gameDescription':game_description,
             'mapSize':map_size}
     return interface.post_request('/games/new-game', json)
+
+def list_games(interface):
+    """
+    Sends a request to retrieve a list of games to join/currently played and 
+    outputs the response json.
+    """
+    return interface.get_request('/games/').json()
+
+def game_info(interface, game_id):
+    """Sends a request for detailed info about a game."""
+    return interface.get_request('/games/'+game_id).json()
+

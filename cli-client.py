@@ -6,6 +6,8 @@ a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 Usage:
     cli-client.py init
     cli-client.py new-game <game-name> <game-description> <map-size>
+    cli-client.py list-games
+    cli-client.py (game-info | join-game) <game-id>
     cli-client.py (-h | --help)
     cli-client.py --version
 
@@ -14,8 +16,11 @@ Commands:
     --version   Show version
     init        Checks configuration and completes it if incomplete. 
                 It is ran whenever any other command is used regardless.
-    new-game    Sends out a request to start a new game with a given name,
+    new-game    Sends a request to start a new game with a given name,
                 description and a chosen size.
+    list-games  Requests a list of games from the server and prints it
+    game-info   Prints detailed information about a game with a given id
+    join-game   Asks the server to join a game with a given id
 
 Map sizes:
     duel      max 2 players and 4 city states
@@ -77,8 +82,9 @@ try:
         interface.save_config(config_file)
     try:
         credentials = account.request_credentials(interface)
-        print("Logged in as", credentials.get('username'),
-              "with email", credentials.get('email'))
+        if opts['init']:
+            print("Logged in as", credentials.get('username'),
+                  "with email", credentials.get('email'))
     except:
         print("Error: Failed to retrieve credentials")
         exit()
@@ -112,6 +118,28 @@ try:
         except ValueError:
             print("Error: Wrong map size. Check -h for possible")
             exit()
+
+    if opts['list-games']:
+        response = games.list_games(interface)
+        for game in response:
+            print("ID:",game['id'],'\tName:',game['name'],'\tHost:',game['host'])
+
+    if opts['game-info']:
+        response = games.game_info(interface, opts['<game-id>'])
+        print("ID:", response['id'],
+              "\nName:", response['name'],
+              "\nHost:", response['host'],
+              "\nDescription:", response['description'],
+              "\nMap size:", response['mapSize'],
+              "\nGame state:", response['gameState'],
+              "\nPlayers:")
+        for player in response['players']:
+            print("\tID:", player['id'],
+                  "\n\t\tUser:", player['humanUserAccount'],
+                  "\n\t\tNumber:", player['playerNumber'],
+                  "\n\t\tCivilization:", player['civilization'],
+                  "\n\t\tPlayer Type:", player['playerType'])
+        print("Number of city states:", response['numberOfCityStates'])
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     exit()
