@@ -13,4 +13,4 @@ def start_new_game(interface, game_name, game_description, map_size):
     json = {'gameName':game_name,
             'gameDescription':game_description,
             'mapSize':map_size}
-    interface.post_request('/games/new-game', json)
+    return interface.post_request('/games/new-game', json)
