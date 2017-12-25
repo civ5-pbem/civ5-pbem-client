@@ -62,7 +62,7 @@ class Interface():
             headers={"Access-Token":self.access_token})
     
     def post_request(self, path, json):
-        return requests.get(
+        return requests.post(
             urljoin(self.server_address, path),
             json=json,
             headers={"Access-Token":self.access_token})
