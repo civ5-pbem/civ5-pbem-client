@@ -11,6 +11,9 @@ import requests
 class InvalidConfigurationError(Exception):
     """Raised when configuration is insufficient."""
 
+class ServerError(Exception):
+    """Raised when something goes wrong on the server."""
+
 def parse_address(address):
     """Turns a possibly invalid address string into an acceptable url.""" 
     p = urlparse(address)
@@ -57,14 +60,20 @@ class Interface():
 
     def get_request(self, path):
         ###TODO: headers? data? anything? No real activities to perform for now
-        return requests.get(
+        response = requests.get(
             urljoin(self.server_address, path), 
             headers={"Access-Token":self.access_token})
+        if response.status_code != 200:
+            raise ServerError
+        return response
     
     def post_request(self, path, json):
-        return requests.post(
+        response = requests.post(
             urljoin(self.server_address, path),
             json=json,
             headers={"Access-Token":self.access_token})
+        if response.status_code != 200:
+            raise ServerError
+        return response
     
 

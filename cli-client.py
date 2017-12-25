@@ -37,7 +37,7 @@ from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
 import civ5client
-from civ5client import account, saves, games, InvalidConfigurationError
+from civ5client import account, saves, games, InvalidConfigurationError, ServerError
 
 opts = docopt(__doc__, help=True, version=("civ5client command line interface "
                                            "pre-alpha"))
@@ -112,12 +112,16 @@ try:
                                  opts['<game-name>'],
                                  opts['<game-description>'],
                                  opts['<map-size>'].upper())
-            if response.status_code == 200:
-                print("Game started successfully with id", 
-                      response.json()['id'])
         except ValueError:
             print("Error: Wrong map size. Check -h for possible")
             exit()
+        except ServerError:
+            print("Error: Server error")
+            exit()
+        else:
+            print("Game started successfully with id", 
+                  response.json()['id'])
+
 
     if opts['list-games']:
         response = games.list_games(interface)
