@@ -33,7 +33,6 @@ Map sizes:
 
 from docopt import docopt
 from configparser import ConfigParser
-from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
 import civ5client
