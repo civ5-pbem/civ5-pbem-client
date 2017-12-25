@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+cli-client.py
+=============
 Script to make full use of the civ5client package to play Civilization 5 in 
 a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 
