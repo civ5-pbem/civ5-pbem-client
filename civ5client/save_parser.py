@@ -49,12 +49,12 @@ class SaveReader():
     def read_string(self):
         """Read a string with the length given in the first 4 bytes."""
         return self.stream.read(
-            'bytes:{0}'.format(self.read_int())).decode("utf-8", 'replace')
-    
+            'bytes:{}'.format(self.read_int())).decode("utf-8", 'replace')
+        
 def parse_file(file_name):
     """
-    Parses savefile and returns the turn number, current player number and the 
-    number of dead players.
+    Parses savefile and returns the turn number, current player number, 
+    number of set passwords and the number of dead players.
     """
     sr = SaveReader(file_name)
 
@@ -65,9 +65,9 @@ def parse_file(file_name):
     current_turn = sr.read_int()
 
     block_positions = sr.find_blocks()
-    # List of players (max is 22)
+    # Number of players
     sr.stream.pos = block_positions[2] + 32
-    player_statuses = sr.read_ints(22)
+    player_statuses = sr.read_ints(22) # Maximum number is 22 players
     dead_number = len(tuple(filter(lambda x: x == 2,
                                    player_statuses)))
 
@@ -75,4 +75,11 @@ def parse_file(file_name):
     sr.stream.pos = block_positions[8] - 32 * 4
     current_player = sr.read_int()
 
-    return current_turn, current_player, dead_number
+    # Number of passwords
+    sr.stream.pos = block_positions[11] + 32
+    password_number = 0
+    for i in range(22):
+        if sr.read_string():
+            password_number += 1
+
+    return current_turn, current_player, password_number, dead_number
