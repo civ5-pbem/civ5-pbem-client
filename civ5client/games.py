@@ -23,6 +23,9 @@ def list_games(interface):
     return interface.get_request('/games/').json()
 
 def game_info(interface, game_id):
-    """Sends a request for detailed info about a game."""
+    """Sends a request for detailed info about a game and prints out the json."""
     return interface.get_request('/games/'+game_id).json()
 
+def join_game(interface, game_id):
+    """Sends a request to join a game."""
+    return interface.post_request('/games/'+game_id+'/join')

@@ -51,6 +51,22 @@ def yes_no_question(question):
     else:
         return False
 
+def pretty_print_game(json):
+    print("ID:", json['id'],
+          "\nName:", json['name'],
+          "\nHost:", json['host'],
+          "\nDescription:", json['description'],
+          "\nMap size:", json['mapSize'],
+          "\nGame state:", json['gameState'],
+          "\nPlayers:")
+    for player in json['players']:
+        print("\tID:", player['id'],
+              "\n\t\tUser:", player['humanUserAccount'],
+              "\n\t\tNumber:", player['playerNumber'],
+              "\n\t\tCivilization:", player['civilization'],
+              "\n\t\tPlayer Type:", player['playerType'])
+    print("Number of city states:", json['numberOfCityStates'])
+
 try:
     #
     # Registration and credentials
@@ -86,7 +102,10 @@ try:
             print("Logged in as", credentials.get('username'),
                   "with email", credentials.get('email'))
     except:
-        print("Error: Failed to retrieve credentials")
+        print(("Error: Failed to retrieve credentials. Either server "
+               "is broken or configuration is wrong. Check server_address "
+               "and access_token in config.ini, or remove it to configure "
+               "again."))
         exit()
     #
     # Retrieve Civ 5 save directory path
@@ -122,28 +141,24 @@ try:
             print("Game started successfully with id", 
                   response.json()['id'])
 
-
     if opts['list-games']:
-        response = games.list_games(interface)
-        for game in response:
-            print("ID:",game['id'],'\tName:',game['name'],'\tHost:',game['host'])
+        json = games.list_games(interface)
+        for game in json:
+            string = 'ID: {}\tName: {:12}\tHost: {:12}'.format(
+                game['id'], game['name'], game['host'])
+            print(string)
 
     if opts['game-info']:
-        response = games.game_info(interface, opts['<game-id>'])
-        print("ID:", response['id'],
-              "\nName:", response['name'],
-              "\nHost:", response['host'],
-              "\nDescription:", response['description'],
-              "\nMap size:", response['mapSize'],
-              "\nGame state:", response['gameState'],
-              "\nPlayers:")
-        for player in response['players']:
-            print("\tID:", player['id'],
-                  "\n\t\tUser:", player['humanUserAccount'],
-                  "\n\t\tNumber:", player['playerNumber'],
-                  "\n\t\tCivilization:", player['civilization'],
-                  "\n\t\tPlayer Type:", player['playerType'])
-        print("Number of city states:", response['numberOfCityStates'])
+        json = games.game_info(interface, opts['<game-id>'])
+        pretty_print_game(json)
+
+    if opts['join-game']:
+        try:
+            response = games.join_game(interface, opts['<game-id>'])
+            pretty_print_game(response.json())
+        except ServerError:
+            print("Error: Failed to join game. Presumably you are already in it")
+            exit()
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     exit()

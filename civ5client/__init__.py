@@ -67,7 +67,7 @@ class Interface():
             raise ServerError
         return response
     
-    def post_request(self, path, json):
+    def post_request(self, path, json=None):
         response = requests.post(
             urljoin(self.server_address, path),
             json=json,
