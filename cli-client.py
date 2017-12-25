@@ -5,6 +5,7 @@ a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 
 Usage:
     cli-client.py init
+    cli-client.py new-game <game-name> <game-description> <map-size>
     cli-client.py (-h | --help)
     cli-client.py --version
 
@@ -13,6 +14,16 @@ Commands:
     --version   Show version
     init        Checks configuration and completes it if incomplete. 
                 It is ran whenever any other command is used regardless.
+    new-game    Sends out a request to start a new game with a given name,
+                description and a chosen size.
+
+Map sizes:
+    duel      max 2 players and 4 city states
+    tiny      max 4 players and 8 city states
+    small     max 6 players and 12 city states
+    standard  max 8 players and 16 city states
+    large     max 10 players and 20 city states
+    huge      max 12 players and 24 city states
 """
 
 from docopt import docopt
@@ -21,7 +32,7 @@ from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
 import civ5client
-from civ5client import account, saves, InvalidConfigurationError
+from civ5client import account, saves, games, InvalidConfigurationError
 
 opts = docopt(__doc__, help=True, version=("civ5client command line interface "
                                            "pre-alpha"))
@@ -65,7 +76,7 @@ try:
         interface.save_config(config_file)
     try:
         credentials = account.request_credentials(interface)
-        print("Configured as", credentials.get('email'))
+        print("Logged in as", credentials.get('email'))
     except:
         print("Error: Failed to retrieve credentials")
         exit()
@@ -83,6 +94,19 @@ try:
                           " Civilizations 5 directory path: "))
         print("Saving save directory path to config")
         saves.save_save_path_config(config_file, path)
+    #
+    # Commands
+    #
+    if opts['new-game']:
+        try:
+            print("Sending a new game request")
+            games.start_new_game(interface,
+                                 opts['<game-name>'],
+                                 opts['<game-description>'],
+                                 opts['<map-size>'].upper())
+        except ValueError:
+            print("Error: Wrong map size. Check -h for possible")
+            exit()
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     exit()
