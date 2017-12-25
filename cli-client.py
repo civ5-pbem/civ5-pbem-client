@@ -76,7 +76,8 @@ try:
         interface.save_config(config_file)
     try:
         credentials = account.request_credentials(interface)
-        print("Logged in as", credentials.get('email'))
+        print("Logged in as", credentials.get('username'),
+              "with email", credentials.get('email'))
     except:
         print("Error: Failed to retrieve credentials")
         exit()

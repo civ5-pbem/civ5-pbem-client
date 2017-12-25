@@ -23,4 +23,3 @@ def request_credentials(interface):
     """
     request = interface.get_request("/user-accounts/current")
     return request.json()
-
