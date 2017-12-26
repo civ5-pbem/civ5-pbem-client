@@ -12,12 +12,11 @@ class AccountTakenError(Exception):
 
 def register_account(server_address, username, email):
     """Sends a registration request with a given email and username."""
-    try:
-        register_request = requests.post(
-            urljoin(server_address,"/user-accounts/register"),
-            json={'email':email, 'username':username})
-    except ServerError:
-        # TODO: Server error could mean a lot of things
+    register_request = requests.post(
+        urljoin(server_address,"/user-accounts/register"),
+        json={'email':email, 'username':username})
+    # TODO: A non-200 status code could mean a lot of things
+    if register_request.status_code != 200:
         raise AccountTakenError
 
 def request_credentials(interface):

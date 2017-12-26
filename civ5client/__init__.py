@@ -8,6 +8,8 @@ from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
+config_file_name = "config.ini"
+
 class InvalidConfigurationError(Exception):
     """Raised when configuration is insufficient."""
 
@@ -34,7 +36,7 @@ class Interface():
         self.access_token = access_token
 
     @classmethod
-    def from_config(cls, config_file_name):
+    def from_config(cls):
         """Creates an Interface based on a config file."""
         config = ConfigParser()
         config.read(config_file_name)
@@ -47,7 +49,7 @@ class Interface():
         else:
             raise InvalidConfigurationError
 
-    def save_config(self, config_file_name):
+    def save_config(self):
         """Saves the Interface information in a config file."""
         config = ConfigParser()
         config.read(config_file_name)
@@ -58,22 +60,32 @@ class Interface():
         with open(config_file_name, 'w') as config_file:
             config.write(config_file)
 
-    def get_request(self, path):
+    def get_request(self, path, stream=False):
         ###TODO: headers? data? anything? No real activities to perform for now
         response = requests.get(
             urljoin(self.server_address, path), 
-            headers={"Access-Token":self.access_token})
+            headers={"Access-Token":self.access_token},
+            stream=stream)
         if response.status_code != 200:
-            raise ServerError
+            print("Messagee",response.status_code)
+            print(response.content)
+            message = response.status_code
+            json = response.json()
+            if 'message' in json:
+                message = json['message']
+            raise ServerError(message)
         return response
     
-    def post_request(self, path, json=None):
+    def post_request(self, path, json=None, files=None):
         response = requests.post(
             urljoin(self.server_address, path),
             json=json,
+            files=files,
             headers={"Access-Token":self.access_token})
         if response.status_code != 200:
-            raise ServerError
+            message = response.status_code
+            json = response.json()
+            if 'message' in json:
+                message = json['message']
+            raise ServerError(message)
         return response
-    
-

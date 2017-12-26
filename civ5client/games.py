@@ -4,10 +4,14 @@ This module contains game initialization & listing related actions.
 
 from enum import Enum
 
-from civ5client import account
+from civ5client import account, saves
 
 allowed_sizes = ['DUEL', 'TINY', 'SMALL', 'STANDARD', 'LARGE', 'HUGE']
 allowed_player_types = ['HUMAN', 'AI', 'CLOSED']
+
+class InvalidReferenceNumberError(Exception):
+    """Raised when user tries to retrieve a game with a non-existant
+    ref_number"""
 
 def start_new_game(interface, game_name, game_description, map_size):
     """Sends a request to start a new game."""
@@ -45,12 +49,16 @@ class Game():
         self.interface = interface
         self.json = json
         self.id = json['id']
+        self.name = json['name']
         
     @classmethod
     def from_number(cls, interface, ref_number):
         game_list = list_games(interface)
-        game_json = next(game for game in game_list
-            if game['ref_number'] == ref_number)
+        try:
+            game_json = next(game for game in game_list
+                if game['ref_number'] == ref_number)
+        except StopIteration:
+            raise InvalidReferenceNumberError
         return cls(interface, game_json)
 
     @classmethod
@@ -79,9 +87,24 @@ class Game():
 
     def find_own_player_id(self):
         """Finds player-id connected to the interface."""
-        username = account.request_credentials(interface)['username']
+        username = account.request_credentials(self.interface)['username']
         return next(player for player in self.json['players'] 
             if player['humanUserAccount'] == username)['id']
+
+    def to_move(self, can_host=True):
+        """
+        Returns whether the player connected to the interface is supposed to do
+        the next move.
+        """
+        username = account.request_credentials(self.interface)['username']
+        if self.json['currentlyMovingPlayer'] == username:
+            return True 
+        elif (self.json['host'] == username 
+              and self.json['gameState'] == 'WAITING_FOR_FIRST_MOVE'
+              and can_host):
+            return True
+        else:
+            return False
 
     def join(self):
         """Requests to join the game with the current account."""
@@ -90,7 +113,21 @@ class Game():
 
     def leave(self):
         """Requests to leave a game with the current account."""
-        return interface.post_request("/games/"+self.id+"/leave")
+        return self.interface.post_request("/games/"+self.id+"/leave")
+    
+    def start(self):
+        """Requests to start a game."""
+        return self.interface.post_request("/games/"+self.id+"/start")
+
+    def download(self):
+        """Downloads the save if it's your turn."""
+        if self.to_move(can_host=False):
+            return saves.download_save(self)
+
+    def upload(self):
+        """Uploads the save and finishes the turn."""
+        if self.to_move():
+            return saves.upload_save(self)
 
 class Player():
     def __init__(self, game, json):
@@ -101,8 +138,11 @@ class Player():
 
     @classmethod
     def from_number(cls, game, number):
-        return cls(game, next(player for player in game.json['players']
-            if player['playerNumber'] == number))
+        try:
+            return cls(game, next(player for player in game.json['players']
+                if player['playerNumber'] == number))
+        except StopIteration:
+            raise InvalidReferenceNumberError
 
     @classmethod
     def from_id(cls, game, player_id):

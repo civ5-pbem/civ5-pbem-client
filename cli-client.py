@@ -8,8 +8,8 @@ a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 Usage:
     cli-client.py init
     cli-client.py new-game <game-name> <game-description> <map-size>
-    cli-client.py (list-games | list-civs)
-    cli-client.py (info | join | leave) <game>
+    cli-client.py (list | list-civs)
+    cli-client.py (info | join | leave | start | download | upload) <game>
     cli-client.py kick <game> <player>
     cli-client.py choose-civ <game> [--player-id=<id>] <civilization>
     cli-client.py change-player-type <game> <player> <player-type>
@@ -29,13 +29,14 @@ Commands:
     new-game                Sends a request to start a new game with a given name,
                             description and a chosen size.
 
-    list-games              Prints a list of existing games
+    list                    Prints a list of existing games
     list-civs               Prints a list of allowed civs
         
     info                    Prints detailed information about a game
     join                    Requests to join a game
     leave                   Requests to leave a game
     kick                    Requests to kick a player
+    start                   Requests to start a game
     
     choose-civ              Changes your own civilization or that of a chosen player (if you're the host)
     change-player-type      Changes the type of a player (ai, human or closed)
@@ -55,11 +56,11 @@ import requests
 
 import civ5client
 from civ5client import account, saves, games, InvalidConfigurationError, ServerError
+from civ5client.games import InvalidReferenceNumberError
+from civ5client.saves import MissingSaveFileError
 
 opts = docopt(__doc__, help=True, version=("civ5client command line interface "
                                            "pre-alpha"))
-
-config_file = 'config.ini'
 
 def yes_no_question(question):
     answer = input(question+" [y/n]: ")
@@ -69,12 +70,14 @@ def yes_no_question(question):
         return False
 
 def pretty_print_game(json):
+    print(json)
     print("ID:", json['id'],
           "\nName:", json['name'],
           "\nHost:", json['host'],
           "\nDescription:", json['description'],
           "\nMap size:", json['mapSize'],
           "\nGame state:", json['gameState'],
+          "\nTurn started:", json['lastMoveFinished'],
           "\nPlayers:")
     for player in json['players']:
         print("\tID:", player['id'],
@@ -89,7 +92,7 @@ try:
     # Registration and credentials
     #
     try:
-        interface = civ5client.Interface.from_config(config_file)
+        interface = civ5client.Interface.from_config()
     except InvalidConfigurationError:
         if not opts['init']:
             print("Missing or invalid config; creating new one")
@@ -105,14 +108,14 @@ try:
                 account.register_account(address, username, email)
             except account.AccountTakenError:
                 # TODO: Should be a loop asking for different emails
-                print("Error: Email already taken")
+                print("Error: Account already taken")
                 exit()
             else:
                 print("An email with the access token has been sent")
         access_token = input("Write the access token from the email: ")
         interface = civ5client.Interface(address, access_token)
         print("Saving interface credentials to config")
-        interface.save_config(config_file)
+        interface.save_config()
     try:
         credentials = account.request_credentials(interface)
         if opts['init']:
@@ -125,19 +128,19 @@ try:
                "again."))
         exit()
     #
-    # Retrieve Civ 5 save directory path
+    # Confirm we have a save directory path in config
     #
     try:
-        path = saves.get_config_save_path(config_file)
+        saves.get_config_save_path()
     except InvalidConfigurationError:
         print("No save directory path in config; attempting to find it")
         try:
             path = saves.get_default_save_path()
         except saves.UnknownOperatingSystemError:
             path = input(("Unknown operating system. Please write the absolute"
-                          " Civilizations 5 directory path: "))
+                          " Civilizations 5 hotseat save directory path: "))
         print("Saving save directory path to config")
-        saves.save_save_path_config(config_file, path)
+        saves.save_save_path_config(path)
     #
     # Commands
     #
@@ -158,20 +161,26 @@ try:
             print("Game started successfully with id", 
                   response.json()['id'])
 
-    if opts['list-games']:
-        json = games.list_games(interface)
-        for game in json:
+    if opts['list']:
+        json_list = games.list_games(interface)
+        for json in json_list:
             string = '{:3}) ID: {}\tName: {:12}\tHost: {:12}'.format(
-                game['ref_number'], game['id'], game['name'], game['host'])
+                json['ref_number'], json['id'], json['name'], json['host'])
+            game = games.Game(interface, json)
+            if game.to_move():
+                string += " <- Your move"
             print(string)
+    
+    if opts['<game>']:
+        game = games.Game.from_any(interface, opts['<game>'])
+        if opts['<player>']:
+            player = games.Player.from_any(game, opts['<player>'])
 
     if opts['info']:
-        game = games.Game.from_any(interface, opts['<game>'])
         pretty_print_game(game.json)
 
     if opts['join']:
         try:
-            game = games.Game.from_any(interface, opts['<game>'])
             response = game.join()
             pretty_print_game(response.json())
         except ServerError:
@@ -179,28 +188,24 @@ try:
             exit()
 
     if opts['leave']:
-        game = games.Game.from_any(opts['<game>'])
         game.leave()
 
-    if opts['list-civs']:
-        json = games.get_civilizations(interface).json()
-        base_string = "{:8}\t{:8}\t{:8}"
-        print(base_string.format("Code", "Name", "Leader"))
-        for civ in json:
-            print(base_string.format(civ['code'],
-                                     civ['name'],
-                                     civ['leader']))
+    if opts['kick']:
+        player.kick()
+
+    if opts['start']:
+        try:
+            game.start()
+        except ServerError:
+            print("Error: Server error; game probably already started")
 
     if opts['change-player-type']:
-        game = games.Game.from_any(interface, opts['<game>'])
-        player = games.Player.from_any(game, opts['<player>'])
         try:
             player.change_type(opts['<player-type>'])
         except ValueError:
             print("Error: Wrong player type")
 
     if opts['choose-civ']:
-        game = games.Game.from_any(interface, opts['<game>'])
         if opts['--player-id']:
             player = games.Player.from_any(game, opts['--player-id'])
         else:
@@ -210,11 +215,25 @@ try:
         except ValueError:
             print("Error: Wrong civilization. list-civs to list acceptable civs")
 
-    if opts['kick']:
-        game = games.Game.from_any(interface, opts['<game>'])
-        player = games.Player.from_any(game, opts['<player>'])
-        player.kick()
+    if opts['download']:
+        try:
+            file_name = game.download()
+            print("Downloaded",file_name)
+            print(("Please complete your turn by loading it in hotseat mode, "
+                   "performing a turn, saving it in the menu so that the next "
+                   "player can continue and uploading it to the server."))
+        except OSError:
+            print("Error: File with wanted name already exists")
+
+    if opts['upload']:
+        try:
+            file_name = game.upload()
+            print("Uploaded and removed", file_name, "without errors")
+        except MissingSaveFileError:
+            print("Error: Save file missing")
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     exit()
+except InvalidReferenceNumberError:
+    print("Error: No game or player with such reference number")
