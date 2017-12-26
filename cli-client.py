@@ -37,8 +37,11 @@ Commands:
     leave                   Requests to leave a game
     kick                    Requests to kick a player
     start                   Requests to start a game
+
+    download                Downloads a save (when it's your turn to move)
+    upload                  Uploads and removes a save, performs the next turn
     
-    choose-civ              Changes your own civilization or that of a chosen player (if you're the host)
+    choose-civ              Changes your own civilization or that of a chosen ai player (if you're the host)
     change-player-type      Changes the type of a player (ai, human or closed)
 
 Map sizes:
@@ -170,7 +173,17 @@ try:
             if game.to_move():
                 string += " <- Your move"
             print(string)
-    
+
+    if opts['list-civs']:
+        json = games.get_civilizations(interface).json()
+        base_string = "{:8}\t{:8}\t{:8}"
+        print(base_string.format("Code", "Name", "Leader"))
+        for civ in json:
+            print(base_string.format(civ['code'],
+                                     civ['name'],
+                                     civ['leader']))
+
+
     if opts['<game>']:
         game = games.Game.from_any(interface, opts['<game>'])
         if opts['<player>']:
