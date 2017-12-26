@@ -165,7 +165,7 @@ try:
                 game['ref_number'], game['id'], game['name'], game['host'])
             print(string)
 
-    if opts['game-info']:
+    if opts['info']:
         game = games.Game.from_any(interface, opts['<game>'])
         pretty_print_game(game.json)
 
