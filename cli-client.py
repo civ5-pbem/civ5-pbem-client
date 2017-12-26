@@ -16,7 +16,7 @@ Usage:
     cli-client.py (-h | --help)
     cli-client.py --version
 
-    <game> can be either a game id or reference number (first given by list-games)
+    <game> can be either a game id or reference number (first given by list)
     <player> can be either a player id or the player number in a game
 
 Commands:
