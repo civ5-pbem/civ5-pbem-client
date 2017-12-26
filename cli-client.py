@@ -8,21 +8,26 @@ a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 Usage:
     cli-client.py init
     cli-client.py new-game <game-name> <game-description> <map-size>
-    cli-client.py list-games
+    cli-client.py (list-games | list-civilizations)
     cli-client.py (game-info | join-game) <game-id>
+    cli-client.py change-player-type <game-id> <player-id> <player-type>
+    cli-client.py kick <game-id> <player-id>
+    cli-client.py (join | leave) <game-id>
+    cli-client.py choose-civilization <game-id> [--player-id=<id>] <civilization>
     cli-client.py (-h | --help)
     cli-client.py --version
 
 Commands:
-    -h --help   Show this
-    --version   Show version
-    init        Checks configuration and completes it if incomplete. 
-                It is ran whenever any other command is used regardless.
-    new-game    Sends a request to start a new game with a given name,
-                description and a chosen size.
-    list-games  Requests a list of games from the server and prints it
-    game-info   Prints detailed information about a game with a given id
-    join-game   Asks the server to join a game with a given id
+    -h --help               Show this
+    --version               Show version
+    init                    Checks configuration and completes it if incomplete. 
+                            It is ran whenever any other command is used regardless.
+    new-game                Sends a request to start a new game with a given name,
+                            description and a chosen size.
+    list-games              Requests a list of games from the server and prints it
+    game-info               Prints detailed information about a game with a given id
+    join-game               Asks the server to join a game with a given id
+    change-player-type      Changes the type of a player in a game
 
 Map sizes:
     duel      max 2 players and 4 city states
@@ -31,6 +36,11 @@ Map sizes:
     standard  max 8 players and 16 city states
     large     max 10 players and 20 city states
     huge      max 12 players and 24 city states
+
+Player types:
+    human
+    ai
+    closed
 """
 
 from docopt import docopt
@@ -160,6 +170,41 @@ try:
         except ServerError:
             print("Error: Failed to join game. Presumably you are already in it")
             exit()
+
+    if opts['list-civilizations']:
+        json = games.get_civilizations(interface).json()
+        base_string = "{:8}\t{:8}\t{:8}"
+        print(base_string.format("Code", "Name", "Leader"))
+        for civ in json:
+            print(base_string.format(civ['code'],
+                                     civ['name'],
+                                     civ['leader']))
+
+    if opts['change-player-type']:
+        games.change_player_type(interface,
+                                opts['<game-id>'],
+                                opts['<player-id>'],
+                                opts['<player-type>'])
+
+    if opts['choose-civilization']:
+        games.choose_civilization(interface,
+                                  opts['<game-id>'],
+                                  opts['<civilization>'],
+                                  player_id=opts['--player-id'])
+
+    if opts['kick']:
+        games.kick(interface,
+                   opts['<game-id>'],
+                   opts['<player-id>'])
+
+    if opts['join']:
+        games.join(interface,
+                   opts['<game-id>'])
+       
+    if opts['leave']:
+        games.leave(interface,
+                    opts['<game-id>'])
+
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     exit()
