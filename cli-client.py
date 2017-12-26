@@ -73,7 +73,6 @@ def yes_no_question(question):
         return False
 
 def pretty_print_game(json):
-    print(json)
     print("ID:", json['id'],
           "\nName:", json['name'],
           "\nHost:", json['host'],
@@ -219,7 +218,7 @@ try:
             print("Error: Wrong player type")
 
     if opts['choose-civ']:
-        if opts['--player-id']:
+        if opts['--player-id']: # TODO: FIX TIHS CONFUSING
             player = games.Player.from_any(game, opts['--player-id'])
         else:
             player = games.Player.from_id(game, game.find_own_player_id())
