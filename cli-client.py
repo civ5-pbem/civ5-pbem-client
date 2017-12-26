@@ -75,23 +75,26 @@ def yes_no_question(question):
     else:
         return False
 
-def pretty_print_game(json):
-    print("ID:", json['id'],
-          "\nName:", json['name'],
-          "\nHost:", json['host'],
-          "\nDescription:", json['description'],
-          "\nMap size:", json['mapSize'],
-          "\nGame state:", json['gameState'],
-          "\nTurn started:", json['lastMoveFinished'],
-          "\nCurrent player:", json['currentlyMovingPlayer'],
+def pretty_print_game(game_json, civ_json):
+    print("ID:", game_json['id'],
+          "\nName:", game_json['name'],
+          "\nHost:", game_json['host'],
+          "\nDescription:", game_json['description'],
+          "\nMap size:", game_json['mapSize'],
+          "\nGame state:", game_json['gameState'],
+          "\nTurn started:", game_json['lastMoveFinished'],
+          "\nCurrent player:", game_json['currentlyMovingPlayer'],
           "\nPlayers:")
-    for player in json['players']:
+    for player in game_json['players']:
+        civ = next(civ for civ in civ_json
+                          if civ['code'] == player['civilization'])
+        civ_string = civ['code']+" - "+civ['leader']+" - "+civ['name']
         print("\tID:", player['id'],
               "\n\t\tUser:", player['humanUserAccount'],
               "\n\t\tNumber:", player['playerNumber'],
-              "\n\t\tCivilization:", player['civilization'],
+              "\n\t\tCivilization:", civ_string,
               "\n\t\tPlayer Type:", player['playerType'])
-    print("Number of city states:", json['numberOfCityStates'])
+    print("Number of city states:", game_json['numberOfCityStates'])
 
 try:
     #
@@ -193,12 +196,14 @@ try:
             player = games.Player.from_any(game, opts['<player>'])
 
     if opts['info']:
-        pretty_print_game(game.json)
+        civ_json = games.get_civilizations(interface).json()
+        pretty_print_game(game.json, civ_json)
 
     if opts['join']:
         try:
             response = game.join()
-            pretty_print_game(response.json())
+            civ_json = games.get_civilizations(interface).json()
+            pretty_print_game(response.json(), civ_json)
         except ServerError:
             print("Error: Failed to join game. Presumably you are already in it")
             exit()
