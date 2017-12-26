@@ -9,7 +9,7 @@ import re
 import os
 from os.path import expanduser
 
-from civ5client import InvalidConfigurationError, config_file_name, save_parser
+from civ5client import ServerError, InvalidConfigurationError, config_file_name, save_parser
 
 class UnknownOperatingSystemError(Exception):
     """
@@ -19,6 +19,9 @@ class UnknownOperatingSystemError(Exception):
 
 class MissingSaveFileError(Exception):
     """Raised when a save file is missing for upload."""
+
+class InvalidUploadError(Exception):
+    """Raised when the server rejects uploaded file"""
 
 def get_default_save_path():
     """Returns the default save path for the user based on the os."""
@@ -75,19 +78,58 @@ def download_save(game):
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path
 
+def validate_upload_file(game, file_name):
+    """
+    Checks if a savefile is valid for upload to a specific game end point, 
+    i.e. if the turn had been made and password set.
+    """
+    turn, current, password_num, dead = save_parser.parse_file(file_name)
+    current += 1 # Correction for 0 vs 1 indexing
+
+    turn_server = game.get_turn() # TODO SERVERSIDE: SHOULD RETURN CURRENT TURN
+    current_server = game.currently_moving_player_number()
+    last_player_number = game.last_human_player_number()
+
+    # Whether the turn had been correctly done
+    turn_error_message = "Turn number mismatch; complete turn"
+    if last_player_number == current_server:
+        if turn != turn_server+1:
+            return False, turn_error_message
+        if current != 0:
+            return False, turn_error_message
+    elif turn != turn_server or current != current_server+1:
+        return False, turn_error_message
+
+    # Whether passwords had been set
+    password_error_message = "Set a password"
+    if turn > 0 and password_num < game.number_of_human_players():
+        return False, password_error_message
+    elif current < password_num:
+        return False, password_error_message
+
+    return True, ""
+
+def select_upload_file(game):
+    """Chooses the file to upload."""
+    # TODO: actually be reasonable when more than 1 correct game.name*.Civ5Save exists
+    path = get_config_save_path()
+    l = glob.glob(path+game.name+"*.Civ5Save")
+    if not l:
+        raise MissingSaveFileError
+    return l[0]
+
 def upload_save(game):
     """
     Uploads a savefile from the civilization 5 save directory corresponding to
     the game (i.e. starting with the name of the game) and removes the file.
     Returns the name of the removed file.
     """
-    path = get_config_save_path()
-    l = glob.glob(path+game.name+"*.Civ5Save")
-    if not l:
-        raise MissingSaveFileError
-    file_name = l[0]
+    file_name = select_upload_file(game)
     files = {'file':open(file_name, 'rb')}
-    request = game.interface.post_request("/games/"+game.id+"/finish-turn",
-                                          files=files)
+    try:
+        request = game.interface.post_request("/games/"+game.id+"/finish-turn",
+                                              files=files)
+    except ServerError:
+        raise InvalidUploadError
     os.remove(file_name)
     return file_name

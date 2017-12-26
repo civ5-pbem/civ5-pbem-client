@@ -10,8 +10,16 @@ allowed_sizes = ['DUEL', 'TINY', 'SMALL', 'STANDARD', 'LARGE', 'HUGE']
 allowed_player_types = ['HUMAN', 'AI', 'CLOSED']
 
 class InvalidReferenceNumberError(Exception):
-    """Raised when user tries to retrieve a game with a non-existant
-    ref_number"""
+    """
+    Raised when user tries to retrieve a game or player with a non-existant
+    ref_number.
+    """
+
+class InvalidNameError(Exception):
+    """
+    Raised when user tries to retrieve a game or player with a non-existent
+    name.
+    """
 
 def start_new_game(interface, game_name, game_description, map_size):
     """Sends a request to start a new game."""
@@ -88,8 +96,7 @@ class Game():
     def find_own_player_id(self):
         """Finds player-id connected to the interface."""
         username = account.request_credentials(self.interface)['username']
-        return next(player for player in self.json['players'] 
-            if player['humanUserAccount'] == username)['id']
+        return Player.from_name(self, username).id
 
     def to_move(self, can_host=True):
         """
@@ -105,6 +112,30 @@ class Game():
             return True
         else:
             return False
+    
+    def currently_moving_player_number(self):
+        """Returns the number of the currently moving player."""
+        return Player.from_name(self, self.json['currentlyMovingPlayer']).number
+
+    def last_human_player_number(self):
+        """
+        Returns the number of the last human player on the list of
+        players, so the one after whom the turn number goes up.
+        """
+        i = 0
+        for player in self.json['players']:
+            if player['playerType'] == 'HUMAN':
+                i = player['playerNumber']
+        return i
+
+    def number_of_human_players(self):
+        """Returns the number of human players."""
+        i = 0
+        for player in self.json['players']:
+            if player['playerType'] == 'HUMAN':
+                i += 1
+        return i
+
 
     def join(self):
         """Requests to join the game with the current account."""
@@ -135,6 +166,15 @@ class Player():
         self.game = game
         self.json = json
         self.id = json['id']
+        self.number = json['playerNumber']
+
+    @classmethod
+    def from_name(cls, game, name):
+        try:
+            return cls(game, next(player for player in game.json['players']
+                if player['humanUserAccount'] == name))
+        except StopIteration:
+            raise InvalidNameError
 
     @classmethod
     def from_number(cls, game, number):
@@ -146,8 +186,8 @@ class Player():
 
     @classmethod
     def from_id(cls, game, player_id):
-        return cls(next(player for player in game.json['players']
-            if player['playerNumber'] == number))
+        return cls(game, next(player for player in game.json['players']
+            if player['id'] == player_id))
 
     @classmethod
     def from_any(cls, game, value):
@@ -172,8 +212,8 @@ class Player():
                                            "/players/"+self.id+
                                            "/change-player-type", json)
 
-    def choose_civilization(self, civilzation):
-        allowed_civs = list_civilizations(interface)
+    def choose_civilization(self, civilization):
+        allowed_civs = list_civilizations(self.interface)
         civilization = civilization.upper()
         if civilization not in allowed_civs:
             raise ValueError("Civilization not allowed")
