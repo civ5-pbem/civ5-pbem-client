@@ -8,26 +8,37 @@ a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 Usage:
     cli-client.py init
     cli-client.py new-game <game-name> <game-description> <map-size>
-    cli-client.py (list-games | list-civilizations)
-    cli-client.py (game-info | join-game) <game-id>
-    cli-client.py change-player-type <game-id> <player-id> <player-type>
-    cli-client.py kick <game-id> <player-id>
-    cli-client.py (join | leave) <game-id>
-    cli-client.py choose-civilization <game-id> [--player-id=<id>] <civilization>
+    cli-client.py (list-games | list-civs)
+    cli-client.py (info | join | leave) <game>
+    cli-client.py kick <game> <player>
+    cli-client.py choose-civ <game> [--player-id=<id>] <civilization>
+    cli-client.py change-player-type <game> <player> <player-type>
     cli-client.py (-h | --help)
     cli-client.py --version
+
+    <game> can be either a game id or reference number (first given by list-games)
+    <player> can be either a player id or the player number in a game
 
 Commands:
     -h --help               Show this
     --version               Show version
+
     init                    Checks configuration and completes it if incomplete. 
                             It is ran whenever any other command is used regardless.
+
     new-game                Sends a request to start a new game with a given name,
                             description and a chosen size.
-    list-games              Requests a list of games from the server and prints it
-    game-info               Prints detailed information about a game with a given id
-    join-game               Asks the server to join a game with a given id
-    change-player-type      Changes the type of a player in a game
+
+    list-games              Prints a list of existing games
+    list-civs               Prints a list of allowed civs
+        
+    info                    Prints detailed information about a game
+    join                    Requests to join a game
+    leave                   Requests to leave a game
+    kick                    Requests to kick a player
+    
+    choose-civ              Changes your own civilization or that of a chosen player (if you're the host)
+    change-player-type      Changes the type of a player (ai, human or closed)
 
 Map sizes:
     duel      max 2 players and 4 city states
@@ -36,11 +47,6 @@ Map sizes:
     standard  max 8 players and 16 city states
     large     max 10 players and 20 city states
     huge      max 12 players and 24 city states
-
-Player types:
-    human
-    ai
-    closed
 """
 
 from docopt import docopt
@@ -155,23 +161,28 @@ try:
     if opts['list-games']:
         json = games.list_games(interface)
         for game in json:
-            string = 'ID: {}\tName: {:12}\tHost: {:12}'.format(
-                game['id'], game['name'], game['host'])
+            string = '{:3}) ID: {}\tName: {:12}\tHost: {:12}'.format(
+                game['ref_number'], game['id'], game['name'], game['host'])
             print(string)
 
     if opts['game-info']:
-        json = games.game_info(interface, opts['<game-id>'])
-        pretty_print_game(json)
+        game = games.Game.from_any(interface, opts['<game>'])
+        pretty_print_game(game.json)
 
-    if opts['join-game']:
+    if opts['join']:
         try:
-            response = games.join_game(interface, opts['<game-id>'])
+            game = games.Game.from_any(interface, opts['<game>'])
+            response = game.join()
             pretty_print_game(response.json())
         except ServerError:
             print("Error: Failed to join game. Presumably you are already in it")
             exit()
 
-    if opts['list-civilizations']:
+    if opts['leave']:
+        game = games.Game.from_any(opts['<game>'])
+        game.leave()
+
+    if opts['list-civs']:
         json = games.get_civilizations(interface).json()
         base_string = "{:8}\t{:8}\t{:8}"
         print(base_string.format("Code", "Name", "Leader"))
@@ -181,29 +192,28 @@ try:
                                      civ['leader']))
 
     if opts['change-player-type']:
-        games.change_player_type(interface,
-                                opts['<game-id>'],
-                                opts['<player-id>'],
-                                opts['<player-type>'])
+        game = games.Game.from_any(interface, opts['<game>'])
+        player = games.Player.from_any(game, opts['<player>'])
+        try:
+            player.change_type(opts['<player-type>'])
+        except ValueError:
+            print("Error: Wrong player type")
 
-    if opts['choose-civilization']:
-        games.choose_civilization(interface,
-                                  opts['<game-id>'],
-                                  opts['<civilization>'],
-                                  player_id=opts['--player-id'])
+    if opts['choose-civ']:
+        game = games.Game.from_any(interface, opts['<game>'])
+        if opts['--player-id']:
+            player = games.Player.from_any(game, opts['--player-id'])
+        else:
+            player = games.Player.from_id(game, game.find_own_player_id())
+        try:
+            player.choose_civilization(opts['<civilization>'])
+        except ValueError:
+            print("Error: Wrong civilization. list-civs to list acceptable civs")
 
     if opts['kick']:
-        games.kick(interface,
-                   opts['<game-id>'],
-                   opts['<player-id>'])
-
-    if opts['join']:
-        games.join(interface,
-                   opts['<game-id>'])
-       
-    if opts['leave']:
-        games.leave(interface,
-                    opts['<game-id>'])
+        game = games.Game.from_any(interface, opts['<game>'])
+        player = games.Player.from_any(game, opts['<player>'])
+        player.kick()
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
