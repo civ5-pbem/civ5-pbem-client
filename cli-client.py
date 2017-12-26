@@ -11,7 +11,7 @@ Usage:
     cli-client.py (list | list-civs)
     cli-client.py (info | join | leave | start | download | upload) <game>
     cli-client.py kick <game> <player>
-    cli-client.py choose-civ <game> [--player-id=<id>] <civilization>
+    cli-client.py choose-civ <game> [<player>] <civilization>
     cli-client.py change-player-type <game> <player> <player-type>
     cli-client.py (-h | --help)
     cli-client.py --version
@@ -40,8 +40,11 @@ Commands:
 
     download                Downloads a save (when it's your turn to move)
     upload                  Uploads and removes a save, performs the next turn
-    
-    choose-civ              Changes your own civilization or that of a chosen ai player (if you're the host)
+
+    choose-civ              Changes your own civilization. If <player> is
+                            provided and you're the host, it allows you 
+                            to change AI's civ
+
     change-player-type      Changes the type of a player (ai, human or closed)
 
 Map sizes:
@@ -80,6 +83,7 @@ def pretty_print_game(json):
           "\nMap size:", json['mapSize'],
           "\nGame state:", json['gameState'],
           "\nTurn started:", json['lastMoveFinished'],
+          "\nCurrent player:", json['currentlyMovingPlayer'],
           "\nPlayers:")
     for player in json['players']:
         print("\tID:", player['id'],
@@ -218,8 +222,8 @@ try:
             print("Error: Wrong player type")
 
     if opts['choose-civ']:
-        if opts['--player-id']: # TODO: FIX TIHS CONFUSING
-            player = games.Player.from_any(game, opts['--player-id'])
+        if opts['<player>']:
+            player = games.Player.from_any(game, opts['<player>'])
         else:
             player = games.Player.from_id(game, game.find_own_player_id())
         try:
