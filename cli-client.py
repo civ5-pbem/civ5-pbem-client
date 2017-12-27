@@ -151,6 +151,9 @@ try:
         print("No save directory path in config; attempting to find it")
         try:
             path = saves.get_default_save_path()
+            print("Assuming", path)
+            if not yes_no_question("Can you confirm the above directory is ok?"):
+                path = input("Write the correct directory path: ")
         except saves.UnknownOperatingSystemError:
             path = input(("Unknown operating system. Please write the absolute"
                           " Civilizations 5 hotseat save directory path: "))
