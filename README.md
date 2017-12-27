@@ -10,6 +10,12 @@ The following packages need to be installed to get civ5-pbem-client up and runni
 * [docopt](https://github.com/docopt/docopt)
 * [bitstring](https://pythonhosted.org/bitstring/)
 
+Once all of the above are installed, use [git](https://git-scm.com/downloads) to download the repository:
+```
+git clone https://github.com/civ5-pbem/civ5-pbem-client.git
+```
+To run the client simply run `cli-client.py` in the command line.
+
 ### Usage
 #### Set up
 Before we can do anything else, we must first register on a server. Get a civ5-pbem-server up and running with your friends and on the client run:
