@@ -1,0 +1,4 @@
+config.ini
+civ5client/__pycache__
+**/*.swp
+todo

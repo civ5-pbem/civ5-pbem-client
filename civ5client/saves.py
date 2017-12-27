@@ -78,6 +78,7 @@ def download_save(game):
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path
 
+# TODO: Not implemented yet
 def validate_upload_file(game, file_name):
     """
     Checks if a savefile is valid for upload to a specific game end point, 

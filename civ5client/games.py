@@ -168,6 +168,7 @@ class Player():
         self.id = json['id']
         self.number = json['playerNumber']
 
+    # TODO: Unused
     @classmethod
     def from_name(cls, game, name):
         try:
