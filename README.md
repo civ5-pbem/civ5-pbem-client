@@ -58,7 +58,7 @@ To change their type:
 ```
 ./cli-client.py change-player-type <game> <player> <player-type>
 ```
-where `<player>` is a player number given by `<info> <game>` and `<player-type>`
+where `<player>` is a player number given by `info <game>` and `<player-type>`
 is one of `human`,`ai`, and `closed`.
 To change their civilization:
 ```
