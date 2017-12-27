@@ -75,11 +75,11 @@ def parse_file(file_name):
         sr.stream.pos = block_positions[8] - 32 * 4
         current_player = sr.read_int()
 
-        # Number of passwords
+        # List of who has a password
         sr.stream.pos = block_positions[11] + 32
-        password_number = 0
+        password_list = [False] * 22
         for i in range(22):
             if sr.read_string():
-                password_number += 1
+                password_list[i] = True
 
-    return current_turn, current_player, password_number, dead_number
+    return current_turn, current_player, password_list, dead_number

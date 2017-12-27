@@ -251,7 +251,7 @@ try:
             file_name = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError:
-            print("Error: Save file missing")
+            print("Error: Save file ",game.name,".Civ5Save missing", sep="")
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")

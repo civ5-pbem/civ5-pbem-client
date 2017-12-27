@@ -20,9 +20,6 @@ class UnknownOperatingSystemError(Exception):
 class MissingSaveFileError(Exception):
     """Raised when a save file is missing for upload."""
 
-class InvalidUploadError(Exception):
-    """Raised when the server rejects uploaded file"""
-
 def get_default_save_path():
     """Returns the default save path for the user based on the os."""
     # TODO: Confirm it's working, especially on windows
@@ -31,7 +28,7 @@ def get_default_save_path():
     elif platform == "darwin":
         save_dir = "~/Documents/Aspyr/Sid Meier's Civilization 5/Saves/hotseat/"
     elif platform == "win32":
-        save_dir = "~/My Games/Sid Meier's Civilization 5/Saves/hotseat/"
+        save_dir = "~\\My Games\\Sid Meier's Civilization 5\\Saves\\hotseat"
     else:
         raise UnknownOperatingSystemError
     return expanduser(save_dir)
@@ -71,20 +68,29 @@ def download_save(game):
                                  stream=True)
         for chunk in response.iter_content():
             file_.write(chunk)
-    turn, current, password_num, dead = save_parser.parse_file(file_name)
+    turn, current, password_list, dead = save_parser.parse_file(file_name)
 
     final_name = game.name+" "+str(turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path
 
-# TODO: Not implemented yet
+def confirm_password(game, file_name):
+    """
+    Checks if password had been set to warn the user in case he might have
+    forgot.
+    """
+    turn, current, password_list, dead = save_parser.parse_file(file_name)
+    if password_list[game.find_own_player_number-1]:
+        return True
+    return False
+
 def validate_upload_file(game, file_name):
     """
     Checks if a savefile is valid for upload to a specific game end point, 
     i.e. if the turn had been made and password set.
     """
-    turn, current, password_num, dead = save_parser.parse_file(file_name)
+    turn, current, password_list, dead = save_parser.parse_file(file_name)
     current += 1 # Correction for 0 vs 1 indexing
 
     turn_server = game.get_turn() # TODO SERVERSIDE: SHOULD RETURN CURRENT TURN
@@ -100,13 +106,6 @@ def validate_upload_file(game, file_name):
             return False, turn_error_message
     elif turn != turn_server or current != current_server+1:
         return False, turn_error_message
-
-    # Whether passwords had been set
-    password_error_message = "Set a password"
-    if turn > 0 and password_num < game.number_of_human_players():
-        return False, password_error_message
-    elif current < password_num:
-        return False, password_error_message
 
     return True, ""
 
@@ -127,10 +126,7 @@ def upload_save(game):
     """
     file_name = select_upload_file(game)
     files = {'file':open(file_name, 'rb')}
-    try:
-        request = game.interface.post_request("/games/"+game.id+"/finish-turn",
-                                              files=files)
-    except ServerError:
-        raise InvalidUploadError
+    request = game.interface.post_request("/games/"+game.id+"/finish-turn",
+                                          files=files)
     os.remove(file_name)
     return file_name
