@@ -79,6 +79,5 @@ first turn, save it as `<name of game>` and run
 And it's up!
 
 ## Credits
-* Savefile parsing
- * [bmaupin](https://github.com/bmaupin/js-civ5save) for working on & gathering research about the Civilization 5 save format
- * [rivarolle](https://github.com/rivarolle/civ5-saveparser) for an extremely helpful savefile parsing package
+* [bmaupin](https://github.com/bmaupin/js-civ5save) for working on & gathering research about the Civilization 5 save format
+* [rivarolle](https://github.com/rivarolle/civ5-saveparser) for an extremely helpful savefile parsing package
