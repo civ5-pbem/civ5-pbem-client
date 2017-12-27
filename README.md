@@ -65,7 +65,7 @@ To change their civilization:
 ./cli-client.py choose-civ <game> <player> <civilization>
 ```
 
-Once players join like described in Joining a game, you will be able to start
+Once players join like described in [Joining a game](https://github.com/civ5-pbem/civ5-pbem-client#joining-a-game), you will be able to start
 the game with:
 ```
 ./cli-client start <game>
