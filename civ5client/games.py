@@ -165,6 +165,10 @@ class Game():
         if self.to_move():
             return saves.upload_save(self)
 
+    def disable_validation(self):
+        """Sends a request to disable validaton."""
+        return self.interface.post_request("/games/"+self.id+"/disable-validation")
+
 class Player():
     def __init__(self, game, json):
         self.interface = game.interface

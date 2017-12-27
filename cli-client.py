@@ -9,7 +9,7 @@ Usage:
     cli-client.py init
     cli-client.py new-game <game-name> <game-description> <map-size>
     cli-client.py (list | list-civs)
-    cli-client.py (info | join | leave | start | download | upload) <game>
+    cli-client.py (info | join | leave | start | download | upload | disable-validation) <game>
     cli-client.py kick <game> <player>
     cli-client.py choose-civ <game> [<player>] <civilization>
     cli-client.py change-player-type <game> <player> <player-type>
@@ -46,6 +46,12 @@ Commands:
                             to change AI's civ
 
     change-player-type      Changes the type of a player (ai, human or closed)
+
+    disable-validation      Turns off server-side validation for a turn,
+                            meaning a save after multiple turns and moves can 
+                            be uploaded. Meant for periods of local hotseat 
+                            when all players are present to save time and get 
+                            on with the game faster. Only host can do this.
 
 Map sizes:
     duel      max 2 players and 4 city states
@@ -219,6 +225,9 @@ try:
             game.start()
         except ServerError:
             print("Error: Server error; game probably already started")
+
+    if opts['disable-validation']:
+        game.disable_validation()
 
     if opts['change-player-type']:
         try:
