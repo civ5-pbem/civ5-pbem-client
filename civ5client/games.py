@@ -100,6 +100,7 @@ class Game():
 
     def find_own_player_number(self):
         """Returns the number of the currently moving player."""
+        username = account.request_credentials(self.interface)['username']
         return Player.from_name(self, username).number
 
     def to_move(self, can_host=True):

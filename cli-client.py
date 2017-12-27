@@ -248,6 +248,12 @@ try:
 
     if opts['upload']:
         try:
+            if not saves.confirm_password(game):
+                print("Warning: Password not set. You should download the save again and set it")
+                if not yes_no_question(
+                        ("Are you sure you want to continue and upload it "
+                    "regardless?")):
+                    exit()
             file_name = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError:
@@ -258,3 +264,5 @@ except requests.exceptions.ConnectionError:
     exit()
 except InvalidReferenceNumberError:
     print("Error: No game or player with such reference number")
+except ServerError as e:
+    print("Server error:", e.args[0])

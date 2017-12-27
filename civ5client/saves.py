@@ -75,39 +75,29 @@ def download_save(game):
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path
 
-def confirm_password(game, file_name):
-    """
-    Checks if password had been set to warn the user in case he might have
-    forgot.
-    """
-    turn, current, password_list, dead = save_parser.parse_file(file_name)
-    if password_list[game.find_own_player_number-1]:
-        return True
-    return False
-
-def validate_upload_file(game, file_name):
-    """
-    Checks if a savefile is valid for upload to a specific game end point, 
-    i.e. if the turn had been made and password set.
-    """
-    turn, current, password_list, dead = save_parser.parse_file(file_name)
-    current += 1 # Correction for 0 vs 1 indexing
-
-    turn_server = game.get_turn() # TODO SERVERSIDE: SHOULD RETURN CURRENT TURN
-    current_server = game.currently_moving_player_number()
-    last_player_number = game.last_human_player_number()
-
-    # Whether the turn had been correctly done
-    turn_error_message = "Turn number mismatch; complete turn"
-    if last_player_number == current_server:
-        if turn != turn_server+1:
-            return False, turn_error_message
-        if current != 0:
-            return False, turn_error_message
-    elif turn != turn_server or current != current_server+1:
-        return False, turn_error_message
-
-    return True, ""
+#def validate_upload_file(game, file_name):
+#    """
+#    Checks if a savefile is valid for upload to a specific game end point, 
+#    i.e. if the turn had been made.
+#    """
+#    turn, current, password_list, dead = save_parser.parse_file(file_name)
+#    current += 1 # Correction for 0 vs 1 indexing
+#
+#    turn_server = game.get_turn() # TODO SERVERSIDE: SHOULD RETURN CURRENT TURN
+#    current_server = game.currently_moving_player_number()
+#    last_player_number = game.last_human_player_number()
+#
+#    # Whether the turn had been correctly done
+#    turn_error_message = "Turn number mismatch; complete turn"
+#    if last_player_number == current_server:
+#        if turn != turn_server+1:
+#            return False, turn_error_message
+#        if current != 0:
+#            return False, turn_error_message
+#    elif turn != turn_server or current != current_server+1:
+#        return False, turn_error_message
+#
+#    return True, ""
 
 def select_upload_file(game):
     """Chooses the file to upload."""
@@ -117,6 +107,14 @@ def select_upload_file(game):
     if not l:
         raise MissingSaveFileError
     return l[0]
+
+def confirm_password(game):
+    """Checks if the user set his password."""
+    file_name = select_upload_file(game)
+    turn, current, password_list, dead = save_parser.parse_file(file_name)
+    if password_list[game.find_own_player_number()-1]:
+        return True
+    return False
 
 def upload_save(game):
     """
