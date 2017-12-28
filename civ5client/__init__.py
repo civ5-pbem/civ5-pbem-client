@@ -67,8 +67,6 @@ class Interface():
             headers={"Access-Token":self.access_token},
             stream=stream)
         if response.status_code != 200:
-            print("Messagee",response.status_code)
-            print(response.content)
             message = response.status_code
             json = response.json()
             if 'message' in json:

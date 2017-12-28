@@ -68,9 +68,16 @@ def parse_file(file_name):
         # 2 is Dead/Closed
         # 3 is Human
         # 4 is Missing, i.e. too small map
-        dead_number = len(tuple(filter(lambda x: x == 2,
-                                       player_statuses)))
+        dead_players = tuple(map(lambda x: x == 2, player_statuses))
 
+        fist_player = None
+        last_player = None
+        for i in range(len(player_statuses)):
+            if player_statuses[i] == 3:
+                if first_player is None:
+                    first_player = i
+                last_player = i
+    
         # Current player
         sr.stream.pos = block_positions[8] - 32 * 4
         current_player = sr.read_int()
@@ -82,4 +89,11 @@ def parse_file(file_name):
             if sr.read_string():
                 password_list[i] = True
 
-    return current_turn, current_player, password_list, dead_number
+    out_dict = {
+        ['turn']:current_turn,
+        ['current']:current_player,
+        ['password_list']:password_list,
+        ['dead_players']:dead_players,
+        ['first_player']:first_player,
+        ['last_player']:last_player}
+    return out_dict

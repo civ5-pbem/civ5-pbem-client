@@ -21,6 +21,12 @@ class InvalidNameError(Exception):
     name.
     """
 
+class WrongMoveError(Exception):
+    """
+    Raised when user tries to download/upload a save when it's not his turn 
+    to do so.
+    """
+
 def start_new_game(interface, game_name, game_description, map_size):
     """Sends a request to start a new game."""
     if map_size not in allowed_sizes:
@@ -122,6 +128,19 @@ class Game():
         """Returns the number of the currently moving player."""
         return Player.from_name(self, self.json['currentlyMovingPlayer']).number
 
+    def first_human_player_number(self):
+        """
+        Returns the number of the first human player on the list of
+        players, so the one who starts next turn.
+        """
+        i = 0
+        for player in self.json['players']:
+            if player['playerType'] == 'HUMAN':
+                i = player['playerNumber']
+                break
+        return i
+
+
     def last_human_player_number(self):
         """
         Returns the number of the last human player on the list of
@@ -141,6 +160,15 @@ class Game():
                 i += 1
         return i
 
+    def get_turn(self):
+        """Returns the current turn number according to the server."""
+        return int(self.json['turnNumber'])
+
+    def is_validation_enabled(self):
+        if self.json['isSaveGameValidationEnabled'] == 'true':
+            return True
+        else:
+            return False
 
     def join(self):
         """Requests to join the game with the current account."""
@@ -155,15 +183,19 @@ class Game():
         """Requests to start a game."""
         return self.interface.post_request("/games/"+self.id+"/start")
 
-    def download(self):
+    def download(self, force=False):
         """Downloads the save if it's your turn."""
-        if self.to_move(can_host=False):
+        if self.to_move(can_host=False) or force:
             return saves.download_save(self)
+        else:
+            raise WrongMoveError
 
     def upload(self):
         """Uploads the save and finishes the turn."""
         if self.to_move():
             return saves.upload_save(self)
+        else:
+            raise WrongMoveError
 
     def disable_validation(self):
         """Sends a request to disable validaton."""

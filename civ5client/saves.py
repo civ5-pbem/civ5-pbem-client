@@ -68,36 +68,42 @@ def download_save(game):
                                  stream=True)
         for chunk in response.iter_content():
             file_.write(chunk)
-    turn, current, password_list, dead = save_parser.parse_file(file_name)
-
     final_name = game.name+" "+str(turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path
 
-#def validate_upload_file(game, file_name):
-#    """
-#    Checks if a savefile is valid for upload to a specific game end point, 
-#    i.e. if the turn had been made.
-#    """
-#    turn, current, password_list, dead = save_parser.parse_file(file_name)
-#    current += 1 # Correction for 0 vs 1 indexing
-#
-#    turn_server = game.get_turn() # TODO SERVERSIDE: SHOULD RETURN CURRENT TURN
-#    current_server = game.currently_moving_player_number()
-#    last_player_number = game.last_human_player_number()
-#
-#    # Whether the turn had been correctly done
-#    turn_error_message = "Turn number mismatch; complete turn"
-#    if last_player_number == current_server:
-#        if turn != turn_server+1:
-#            return False, turn_error_message
-#        if current != 0:
-#            return False, turn_error_message
-#    elif turn != turn_server or current != current_server+1:
-#        return False, turn_error_message
-#
-#    return True, ""
+def check_kills(game, file_name=None):
+    """
+    Compares the game status on the server and in the save and checks if
+    anyone died on the current turn."""
+    if file_name is None:
+        file_name = select_upload_file(game)
+
+def validate_upload_file(game, file_name=None):
+    """
+    Checks if a savefile is valid for upload to a specific game end point, 
+    i.e. if the turn had been made.
+    """
+    if file_name is None:
+        file_name = select_upload_file(game)
+    save = save_parser.parse_file(file_name)
+
+    turn_server = game.get_turn()
+    current_server = game.currently_moving_player_number()
+    last_player_server = game.last_human_player_number()
+    first_player_server = game.first_human_player_number()
+
+    # Whether the turn had been correctly done
+    if last_player_server == current_server:
+        if save['turn'] != turn_server+1:
+            return False
+        if save['current'] != save['first_player']:
+            return False
+    elif save['turn'] != turn_server or save['current']+1 <= current_server:
+        return False
+
+    return True
 
 def select_upload_file(game):
     """Chooses the file to upload."""
@@ -108,23 +114,25 @@ def select_upload_file(game):
         raise MissingSaveFileError
     return l[0]
 
-def confirm_password(game):
+def confirm_password(game, file_name=None):
     """Checks if the user set his password."""
-    file_name = select_upload_file(game)
-    turn, current, password_list, dead = save_parser.parse_file(file_name)
+    if file_name is None:
+        file_name = select_upload_file(game)
+    password_list = save_parser.parse_file(file_name)['password_list']
     if password_list[game.find_own_player_number()-1]:
         return True
     return False
 
-def upload_save(game):
+def upload_save(game, file_name=None):
     """
     Uploads a savefile from the civilization 5 save directory corresponding to
     the game (i.e. starting with the name of the game) and removes the file.
     Returns the name of the removed file.
     """
-    file_name = select_upload_file(game)
+    if file_name is None:
+        file_name = select_upload_file(game)
     files = {'file':open(file_name, 'rb')}
-    request = game.interface.post_request("/games/"+game.id+"/finish-turn",
-                                          files=files)
+    response = game.interface.post_request("/games/"+game.id+"/finish-turn",
+                                           files=files)
     os.remove(file_name)
     return file_name
