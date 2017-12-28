@@ -71,7 +71,7 @@ class Interface():
             json = response.json()
             if 'message' in json:
                 message = json['message']
-            raise ServerError(message)
+            raise ServerError(message, response.content)
         return response
     
     def post_request(self, path, json=None, files=None):
@@ -85,5 +85,5 @@ class Interface():
             json = response.json()
             if 'message' in json:
                 message = json['message']
-            raise ServerError(message)
+            raise ServerError(message, response.content)
         return response

@@ -6,14 +6,14 @@ Script to make full use of the civ5client package to play Civilization 5 in
 a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 
 Usage:
-    cli-client.py init [--json]
-    cli-client.py new-game <game-name> <game-description> <map-size> [--json]
-    cli-client.py (list | list-civs) [--json]
-    cli-client.py (info | join | leave | start | disable-validation) <game> [--json]
-    cli-client.py (download | upload) <game> [--force] [--json]
-    cli-client.py kick <game> <player> [--json]
-    cli-client.py choose-civ <game> [<player>] <civilization> [--json]
-    cli-client.py change-player-type <game> <player> <player-type> [--json]
+    cli-client.py init [--verbose]
+    cli-client.py new-game <game-name> <game-description> <map-size> [--verbose]
+    cli-client.py (list | list-civs) [--verbose]
+    cli-client.py (info | join | leave | start | disable-validation) <game> [--verbose]
+    cli-client.py (download | upload) <game> [--force] [--verbose]
+    cli-client.py kick <game> <player> [--verbose]
+    cli-client.py choose-civ <game> [<player>] <civilization> [--verbose]
+    cli-client.py change-player-type <game> <player> <player-type> [--verbose]
     cli-client.py (-h | --help)
     cli-client.py --version
 
@@ -23,7 +23,7 @@ Usage:
 Commands:
     -h --help               Show this
     --version               Show version
-    --json                  Prints data from the response json
+    --verbose                  Prints data from the response json
     --force                 Forces an attempt to perform an action without
                             clientside validation
 
@@ -106,7 +106,7 @@ def pretty_print_game(game_json, civ_json):
               "\n\t\tPlayer Type:", player['playerType'])
     print("Number of city states:", game_json['numberOfCityStates'])
 
-json = None
+content = None
 
 try:
     #
@@ -138,7 +138,9 @@ try:
         print("Saving interface credentials to config")
         interface.save_config()
     try:
-        json = account.request_credentials(interface)
+        response = account.request_credentials(interface)
+        json = response.json
+        content = response.content
         if opts['init']:
             print("Logged in as", json['username'],
                   "with email", json['email'])
@@ -171,22 +173,23 @@ try:
     if opts['new-game']:
         try:
             print("Attempting to send a new game request")
-            json = games.start_new_game(interface,
+            response = games.start_new_game(interface,
                                         opts['<game-name>'],
                                         opts['<game-description>'],
-                                        opts['<map-size>'].upper()).json()
+                                        opts['<map-size>'].upper())
+            content = response.content
+            json = response.json()
         except ValueError:
             print("Error: Wrong map size. Check -h for possible")
-            exit()
-        except ServerError:
-            print("Error: Server error")
             exit()
         else:
             print("Game started successfully with id", 
                   json['id'])
 
     if opts['list']:
-        json = games.list_games(interface)
+        response = games.list_games(interface)
+        content = response.content
+        json = response.json
         for j in json:
             string = '{:3}) ID: {}\tName: {:12}\tHost: {:12}'.format(
                 j['ref_number'], j['id'], j['name'], j['host'])
@@ -196,7 +199,9 @@ try:
             print(string)
 
     if opts['list-civs']:
-        json = games.get_civilizations(interface).json()
+        response = games.get_civilizations(interface)
+        content = response.content
+        json = response.json()
         base_string = "{:8}\t{:8}\t{:8}"
         print(base_string.format("Code", "Name", "Leader"))
         for civ in json:
@@ -211,13 +216,16 @@ try:
             player = games.Player.from_any(game, opts['<player>'])
 
     if opts['info']:
-        json = games.get_civilizations(interface).json()
+        response = games.get_civilizations(interface)
+        content = response.content
+        json = response.json()
         pretty_print_game(game.json, json)
 
     if opts['join']:
         try:
             response = game.join()
             civ_json = games.get_civilizations(interface).json()
+            content = response.content
             json = response.json()
             pretty_print_game(json, civ_json)
         except ServerError:
@@ -225,23 +233,20 @@ try:
             exit()
 
     if opts['leave']:
-        json = game.leave().json()
+        content = game.leave().content
 
     if opts['kick']:
-        json = player.kick().json()
+        content = player.kick().content
 
     if opts['start']:
-        try:
-            json = game.start().json()
-        except ServerError:
-            print("Error: Server error; game probably already started")
+        content = game.start().content
 
     if opts['disable-validation']:
-        json = game.disable_validation().json()
+        content = game.disable_validation().content
 
     if opts['change-player-type']:
         try:
-            json = player.change_type(opts['<player-type>']).json()
+            content = player.change_type(opts['<player-type>']).content
         except ValueError:
             print("Error: Wrong player type")
 
@@ -251,13 +256,13 @@ try:
         else:
             player = games.Player.from_id(game, game.find_own_player_id())
         try:
-            json = player.choose_civilization(opts['<civilization>']).json()
+            content = player.choose_civilization(opts['<civilization>']).content
         except ValueError:
             print("Error: Wrong civilization. list-civs to list acceptable civs")
 
     if opts['download']:
         try:
-            file_name = game.download(force=opts['--force'])
+            file_name, response = game.download(force=opts['--force'])
             print("Downloaded",file_name)
             print(("Please complete your turn by loading it in hotseat mode, "
                    "performing a turn, saving it in the menu so that the next "
@@ -279,24 +284,25 @@ try:
                 valid = saves.validate_upload_file(game)
                 if not valid:
                     print("Error: Turn not taken/invalid turn")
-            file_name = game.upload()
+            file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError:
             print("Error: Save file ",game.name,".Civ5Save missing", sep="")
         except WrongMoveError:
             print("Error: Not your move to upload")
 
-    if opts['--json']:
-        if json is not None:
-            print("Interpreted json:\n", json)
+    if opts['--verbose']:
+        if content is not None:
+            print("Response content:\n", content)
         else:
-            print("No json to print")
+            print("No content to print")
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
 except InvalidReferenceNumberError:
     print("Error: No game or player with such reference number")
 except ServerError as e:
-    if json is not None:
-        print("json:\n", json)
-    print("Server error:", e.args[0])
+    if opts['--verbose']:
+        print("Server error:", e.args[0], "\n", e.args[1])
+    else:
+        print("Server error:", e.args[0])

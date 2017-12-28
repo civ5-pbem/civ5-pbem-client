@@ -24,4 +24,4 @@ def request_credentials(interface):
     related to a specific access token on a server.
     """
     request = interface.get_request("/user-accounts/current")
-    return request.json()
+    return request

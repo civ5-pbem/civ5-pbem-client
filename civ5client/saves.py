@@ -71,7 +71,7 @@ def download_save(game):
     final_name = game.name+" "+str(turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     os.rename(file_name, path) # May throw OSError if already exists on windows
-    return path
+    return path, response
 
 def check_kills(game, file_name=None):
     """
@@ -135,4 +135,4 @@ def upload_save(game, file_name=None):
     response = game.interface.post_request("/games/"+game.id+"/finish-turn",
                                            files=files)
     os.remove(file_name)
-    return file_name
+    return file_name, response

@@ -39,12 +39,13 @@ def start_new_game(interface, game_name, game_description, map_size):
 def list_games(interface):
     """
     Sends a request to retrieve a list of games to join/currently played and 
-    outputs the response json.
+    outputs the response json. Returns the json and response.
     """
-    json = interface.get_request('/games/').json()
+    response = interface.get_request('/games/')
+    json = response.json()
     for i in range(len(json)):
         json[i]['ref_number'] = i + 1
-    return json
+    return json, response
 
 def get_civilizations(interface):
     """Returns a get request to get info about acceptable civilizations."""
@@ -67,7 +68,7 @@ class Game():
         
     @classmethod
     def from_number(cls, interface, ref_number):
-        game_list = list_games(interface)
+        game_list = list_games(interface)[0]
         try:
             game_json = next(game for game in game_list
                 if game['ref_number'] == ref_number)
@@ -77,7 +78,7 @@ class Game():
 
     @classmethod
     def from_id(cls, interface, game_id):
-        game_list = list_games(interface)
+        game_list = list_games(interface)[0]
         game_json = next(game for game in game_list
             if game['id'] == game_id)
         return cls(interface, game_json)
