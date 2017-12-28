@@ -23,7 +23,7 @@ Usage:
 Commands:
     -h --help               Show this
     --version               Show version
-    --verbose                  Prints data from the response json
+    --verbose               Prints out the contents of the http response
     --force                 Forces an attempt to perform an action without
                             clientside validation
 
