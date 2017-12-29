@@ -67,6 +67,16 @@ class Game():
         self.name = json['name']
         
     @classmethod
+    def from_name(cls, interface, game_name):
+        game_list = list_games(interface)[0]
+        try:
+            game_json = next(game for game in game_list
+                if game['name'] == game_name)
+        except StopIteration:
+            raise InvalidNameError
+        return cls(interface, game_json)
+
+    @classmethod
     def from_number(cls, interface, ref_number):
         game_list = list_games(interface)[0]
         try:
@@ -93,8 +103,10 @@ class Game():
             number = int(value)
             return cls.from_number(interface, number)
         except ValueError:
-            player_id = value
-            return cls.from_id(interface, player_id)
+            try:
+                return cls.from_name(interface, value)
+            except InvalidNameError:
+                return cls.from_id(interface, value)
 
     def info(self):
         """Returns game json."""
@@ -210,7 +222,6 @@ class Player():
         self.id = json['id']
         self.number = json['playerNumber']
 
-    # TODO: Unused
     @classmethod
     def from_name(cls, game, name):
         try:
@@ -235,15 +246,17 @@ class Player():
     @classmethod
     def from_any(cls, game, value):
         """
-        Initializes from a player number or id, and decides which was used as
-        an argument.
+        Initializes from a player number, name or id, and decides which was 
+        used as an argument.
         """
         try:
             number = int(value)
             return cls.from_number(game, number)
         except ValueError:
-            player_id = value
-            return cls.from_id(game, player_id)
+            try:
+                return cls.from_name(game, value)
+            except InvalidNameError:
+                return cls.from_id(game, value)
     
     def change_type(self, player_type):
         """Requests to change type of player."""
