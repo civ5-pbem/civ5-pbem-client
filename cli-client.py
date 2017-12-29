@@ -106,8 +106,6 @@ def pretty_print_game(game_json, civ_json):
               "\n\t\tPlayer Type:", player['playerType'])
     print("Number of city states:", game_json['numberOfCityStates'])
 
-content = None
-
 try:
     #
     # Registration and credentials
@@ -292,9 +290,9 @@ try:
             print("Error: Not your move to upload")
 
     if opts['--verbose']:
-        if content is not None:
+        try:
             print("Response content:\n", content)
-        else:
+        except NameError:
             print("No content to print")
 
 except requests.exceptions.ConnectionError:
