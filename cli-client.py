@@ -73,7 +73,7 @@ from configparser import ConfigParser
 import requests
 
 import civ5client
-from civ5client import account, saves, games, InvalidConfigurationError, ServerError
+from civ5client import account, saves, games, InvalidConfigurationError, ServerError, config_file_name
 from civ5client.games import InvalidReferenceNumberError, WrongMoveError, InvalidIdError
 from civ5client.saves import MissingSaveFileError
 
@@ -110,13 +110,25 @@ def pretty_print_game(game_json, civ_json):
 
 try:
     #
+    # Initial config
+    #
+    config = ConfigParser()
+    config.read(config_file_name)
+    if not (config.has_section('Client Settings')
+            or config.has_option('Client Settings', 'response_log_name')
+            or config.has_option('Client Settings', 'log_responses')):
+        if not opts['init']:
+            print("Missing or incomplete config; attempting to fix")
+        config.add_section('Client Settings')
+        config['Client Settings']['response_log_name'] = "response_log.txt"
+        config['Client Settings']['log_responses'] = "False"
+        config.write(open(config_file_name, 'w'))
+    #
     # Registration and credentials
     #
     try:
         interface = civ5client.Interface.from_config()
     except InvalidConfigurationError:
-        if not opts['init']:
-            print("Missing or invalid config; creating new one")
         address = input("Write the server address: ")
         address = civ5client.parse_address(address)
         registered = yes_no_question(("Do you have an access token (i.e. an"
@@ -151,6 +163,7 @@ try:
                "is broken or configuration is wrong. Check server_address "
                "and access_token in config.ini, or remove it to configure "
                "again."))
+        raise
         if opts['--verbose']:
             print(e.__class__, ":", e.args[0])
     #

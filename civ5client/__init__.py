@@ -9,8 +9,18 @@ from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
 
+# config initialization
+# TODO: Is this really the best way?
 config_file_name = "config.ini"
-log_file_name = "response_log.txt"
+
+config = ConfigParser()
+config.read(config_file_name)
+if not config.has_section('Client Settings'):
+    config.add_section('Client Settings')
+    config['Client Settings']['response_log_name'] = "response_log.txt"
+    config['Client Settings']['log_responses'] = "False"
+log_file_name = config['Client Settings']['response_log_name']
+log_responses = (config['Client Settings']['log_responses'].lower() == "true")
 
 class InvalidConfigurationError(Exception):
     """Raised when configuration is insufficient."""
@@ -26,7 +36,7 @@ def parse_address(address):
         ('http',netloc,"","","",""))
     return out_address
 
-def log_response(log_file, response, stream=False):
+def log_response(response, log_file=log_file_name, stream=False):
     """Writes down the request sent and response received in a log file."""
     with open(log_file, 'a') as log:
         time_str = "Request at " + time.strftime("%Y-%m-%d %H:%M:%S")
@@ -77,7 +87,7 @@ class Interface():
         with open(config_file_name, 'w') as config_file:
             config.write(config_file)
 
-    def get_request(self, path, stream=False, log=True):
+    def get_request(self, path, stream=False, log=log_responses):
         ###TODO: headers? data? anything? No real activities to perform for now
         response = requests.get(
             urljoin(self.server_address, path), 
@@ -86,7 +96,7 @@ class Interface():
         if log:
             if response.status_code != 200:
                 stream = False
-            log_response(log_file_name, response, stream=stream)
+            log_response(response, stream=stream)
         if response.status_code != 200:
             message = response.status_code
             json = response.json()
@@ -95,7 +105,7 @@ class Interface():
             raise ServerError( message, response.content)
         return response
     
-    def post_request(self, path, json=None, files=None, log=True):
+    def post_request(self, path, json=None, files=None, log=log_responses):
         response = requests.post(
             urljoin(self.server_address, path),
             json=json,
@@ -104,7 +114,7 @@ class Interface():
         if log:
             if response.status_code != 200:
                 stream = False
-            log_response(log_file_name, response)
+            log_response(response)
         if response.status_code != 200:
             message = response.status_code
             json = response.json()
