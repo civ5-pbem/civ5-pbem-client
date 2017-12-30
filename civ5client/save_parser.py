@@ -70,7 +70,7 @@ def parse_file(file_name):
         # 4 is Missing, i.e. too small map
         dead_players = tuple(map(lambda x: x == 2, player_statuses))
 
-        fist_player = None
+        first_player = None
         last_player = None
         for i in range(len(player_statuses)):
             if player_statuses[i] == 3:
@@ -90,10 +90,10 @@ def parse_file(file_name):
                 password_list[i] = True
 
     out_dict = {
-        ['turn']:current_turn,
-        ['current']:current_player,
-        ['password_list']:password_list,
-        ['dead_players']:dead_players,
-        ['first_player']:first_player,
-        ['last_player']:last_player}
+        'turn':current_turn,
+        'current':current_player,
+        'password_list':password_list,
+        'dead_players':dead_players,
+        'first_player':first_player,
+        'last_player':last_player}
     return out_dict

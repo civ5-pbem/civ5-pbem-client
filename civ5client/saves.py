@@ -68,7 +68,7 @@ def download_save(game):
                                  stream=True)
         for chunk in response.iter_content():
             file_.write(chunk)
-    final_name = game.name+" "+str(turn)+".Civ5Save"
+    final_name = game.name+" "+str(game.turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path, response
@@ -112,7 +112,7 @@ def select_upload_file(game):
     if game.json['gameState'] == 'WAITING_FOR_FIRST_MOVE':
         desired_name = desired_name_bulk + ".Civ5Save"
     else:
-        desired_name = desired_name_bulk + str(game.turn) + ".Civ5Save"
+        desired_name = desired_name_bulk + " " + str(game.turn) + ".Civ5Save"
     l = glob.glob(desired_name)
     if not l:
         raise MissingSaveFileError(desired_name)

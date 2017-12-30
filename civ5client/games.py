@@ -123,12 +123,12 @@ class Game():
 
     def find_own_player_id(self):
         """Finds player-id connected to the interface."""
-        username = account.request_credentials(self.interface)['username']
+        username = account.request_credentials(self.interface).json()['username']
         return Player.from_name(self, username).id
 
     def find_own_player_number(self):
         """Returns the number of the currently moving player."""
-        username = account.request_credentials(self.interface)['username']
+        username = account.request_credentials(self.interface).json()['username']
         return Player.from_name(self, username).number
 
     def to_move(self, can_host=True):
