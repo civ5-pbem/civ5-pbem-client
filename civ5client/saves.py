@@ -89,7 +89,7 @@ def validate_upload_file(game, file_name=None):
         file_name = select_upload_file(game)
     save = save_parser.parse_file(file_name)
 
-    turn_server = game.get_turn()
+    turn_server = game.turn
     current_server = game.currently_moving_player_number()
     last_player_server = game.last_human_player_number()
     first_player_server = game.first_human_player_number()
@@ -106,12 +106,16 @@ def validate_upload_file(game, file_name=None):
     return True
 
 def select_upload_file(game):
-    """Chooses the file to upload."""
-    # TODO: actually be reasonable when more than 1 correct game.name*.Civ5Save exists
+    """Chooses the file to upload and returns its path."""
     path = get_config_save_path()
-    l = glob.glob(path+game.name+"*.Civ5Save")
+    desired_name_bulk = path+game.name
+    if game.json['gameState'] == 'WAITING_FOR_FIRST_MOVE':
+        desired_name = desired_name_bulk + ".Civ5Save"
+    else:
+        desired_name = desired_name_bulk + str(game.turn) + ".Civ5Save"
+    l = glob.glob(desired_name)
     if not l:
-        raise MissingSaveFileError
+        raise MissingSaveFileError(desired_name)
     return l[0]
 
 def confirm_password(game, file_name=None):

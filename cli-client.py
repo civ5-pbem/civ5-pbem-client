@@ -238,6 +238,8 @@ try:
 
     if opts['start']:
         content = game.start().content
+        print("Game started. Please perform the first turn, save the game as",
+              game.name, "and upload it with the upload command")
 
     if opts['disable-validation']:
         content = game.disable_validation().content
@@ -282,8 +284,9 @@ try:
                     print("Error: Turn not taken/invalid turn")
             file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
-        except MissingSaveFileError:
-            print("Error: Save file ",game.name,".Civ5Save missing", sep="")
+        except MissingSaveFileError as e:
+            print("Error: Save file", e.args[0], "not found. Please rename",
+                  "the file if it exists under a different name")
         except WrongMoveError:
             print("Error: Not your move to upload")
 

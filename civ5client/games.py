@@ -65,6 +65,7 @@ class Game():
         self.json = json
         self.id = json['id']
         self.name = json['name']
+        self.turn = int(self.json['turnNumber'])
         
     @classmethod
     def from_name(cls, interface, game_name):
@@ -172,10 +173,6 @@ class Game():
             if player['playerType'] == 'HUMAN':
                 i += 1
         return i
-
-    def get_turn(self):
-        """Returns the current turn number according to the server."""
-        return int(self.json['turnNumber'])
 
     def is_validation_enabled(self):
         if self.json['isSaveGameValidationEnabled'] == 'true':
