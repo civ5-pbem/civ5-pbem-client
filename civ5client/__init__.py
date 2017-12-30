@@ -84,6 +84,8 @@ class Interface():
             headers={"Access-Token":self.access_token},
             stream=stream)
         if log:
+            if response.status_code != 200:
+                stream = False
             log_response(log_file_name, response, stream=stream)
         if response.status_code != 200:
             message = response.status_code
@@ -100,6 +102,8 @@ class Interface():
             files=files,
             headers={"Access-Token":self.access_token})
         if log:
+            if response.status_code != 200:
+                stream = False
             log_response(log_file_name, response)
         if response.status_code != 200:
             message = response.status_code
