@@ -2,4 +2,4 @@ config.ini
 civ5client/__pycache__
 **/*.swp
 todo
-response_log
+response_log.txt

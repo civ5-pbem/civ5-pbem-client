@@ -74,7 +74,7 @@ import requests
 
 import civ5client
 from civ5client import account, saves, games, InvalidConfigurationError, ServerError
-from civ5client.games import InvalidReferenceNumberError, WrongMoveError
+from civ5client.games import InvalidReferenceNumberError, WrongMoveError, InvalidIdError
 from civ5client.saves import MissingSaveFileError
 
 opts = docopt(__doc__, help=True, version=("civ5client command line interface "
@@ -190,9 +190,8 @@ try:
                   json['id'])
 
     if opts['list']:
-        response = games.list_games(interface)
+        json, response = games.list_games(interface)
         content = response.content
-        json = response.json
         for j in json:
             string = '{:3}) ID: {}\tName: {:12}\tHost: {:12}'.format(
                 j['ref_number'], j['id'], j['name'], j['host'])
@@ -301,18 +300,12 @@ try:
         except NameError:
             print("No content to print")
 
-    with open("response_log", 'a') as log:
-        time_str = time.strftime("%Y-%m-%d %H:%M:%S") + " >>> "
-        log.write(time_str)
-        log.write(" ".join(arg for arg in sys.argv))
-        log.write("\n")
-        log.write(str(content))
-        log.write("\n")
-
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
 except InvalidReferenceNumberError:
     print("Error: No game or player with such reference number")
+except InvalidIdError:
+    print("Error: No game or player with such an id")
 except ServerError as e:
     if opts['--verbose']:
         print("Server error:", e.args[0], "\n", e.args[1])
