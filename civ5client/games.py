@@ -21,6 +21,11 @@ class InvalidNameError(Exception):
     name.
     """
 
+class InvalidIdError(Exception):
+    """
+    Raised when user tries to retrieve a game or player with a non-existent id.
+    """
+
 class WrongMoveError(Exception):
     """
     Raised when user tries to download/upload a save when it's not his turn 
@@ -65,7 +70,7 @@ class Game():
         self.json = json
         self.id = json['id']
         self.name = json['name']
-        self.turn = int(self.json['turnNumber'])
+        self.turn = self.json['turnNumber']
         
     @classmethod
     def from_name(cls, interface, game_name):
@@ -90,8 +95,11 @@ class Game():
     @classmethod
     def from_id(cls, interface, game_id):
         game_list = list_games(interface)[0]
-        game_json = next(game for game in game_list
-            if game['id'] == game_id)
+        try:
+            game_json = next(game for game in game_list
+                if game['id'] == game_id)
+        except StopIteration:
+            raise InvalidIdError
         return cls(interface, game_json)
 
     @classmethod
@@ -103,7 +111,7 @@ class Game():
         try:
             number = int(value)
             return cls.from_number(interface, number)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 return cls.from_name(interface, value)
             except InvalidNameError:
@@ -128,7 +136,7 @@ class Game():
         Returns whether the player connected to the interface is supposed to do
         the next move.
         """
-        username = account.request_credentials(self.interface)['username']
+        username = account.request_credentials(self.interface).json()['username']
         if self.json['currentlyMovingPlayer'] == username:
             return True 
         elif (self.json['host'] == username 
@@ -237,8 +245,11 @@ class Player():
 
     @classmethod
     def from_id(cls, game, player_id):
-        return cls(game, next(player for player in game.json['players']
-            if player['id'] == player_id))
+        try:
+            return cls(game, next(player for player in game.json['players']
+                if player['id'] == player_id))
+        except StopIteration:
+            raise InvalidIdError
 
     @classmethod
     def from_any(cls, game, value):
@@ -249,7 +260,7 @@ class Player():
         try:
             number = int(value)
             return cls.from_number(game, number)
-        except ValueError:
+        except (ValueError, TypeError):
             try:
                 return cls.from_name(game, value)
             except InvalidNameError:
