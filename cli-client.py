@@ -65,6 +65,8 @@ Map sizes:
     large     max 10 players and 20 city states
     huge      max 12 players and 24 city states
 """
+import sys
+import time
 
 from docopt import docopt
 from configparser import ConfigParser
@@ -137,17 +139,20 @@ try:
         interface.save_config()
     try:
         response = account.request_credentials(interface)
-        json = response.json
+        json = response.json()
         content = response.content
         if opts['init']:
             print("Logged in as", json['username'],
                   "with email", json['email'])
-    except:
+    except requests.exceptions.ConnectionError:
+        raise
+    except Exception as e:
         print(("Error: Failed to retrieve credentials. Either server "
                "is broken or configuration is wrong. Check server_address "
                "and access_token in config.ini, or remove it to configure "
                "again."))
-        exit()
+        if opts['--verbose']:
+            print(e.__class__, ":", e.args[0])
     #
     # Confirm we have a save directory path in config
     #
@@ -295,6 +300,14 @@ try:
             print("Response content:\n", content)
         except NameError:
             print("No content to print")
+
+    with open("response_log", 'a') as log:
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S") + " >>> "
+        log.write(time_str)
+        log.write(" ".join(arg for arg in sys.argv))
+        log.write("\n")
+        log.write(str(content))
+        log.write("\n")
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
