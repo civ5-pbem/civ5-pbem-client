@@ -163,7 +163,6 @@ try:
                "is broken or configuration is wrong. Check server_address "
                "and access_token in config.ini, or remove it to configure "
                "again."))
-        raise
         if opts['--verbose']:
             print(e.__class__, ":", e.args[0])
     #

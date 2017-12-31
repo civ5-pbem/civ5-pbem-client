@@ -5,6 +5,7 @@ Package to interact with civ5-pbem-server by http requests.
 """
 import time
 
+from json.decoder import JSONDecodeError
 from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 import requests
@@ -99,10 +100,13 @@ class Interface():
             log_response(response, stream=stream)
         if response.status_code != 200:
             message = response.status_code
-            json = response.json()
-            if 'message' in json:
-                message = json['message']
-            raise ServerError( message, response.content)
+            try:
+                json = response.json()
+                if 'message' in json:
+                    message = json['message']
+            except JSONDecodeError:
+                message = 'No json to retrieve message from'
+            raise ServerError(message, response.content)
         return response
     
     def post_request(self, path, json=None, files=None, log=log_responses):
@@ -117,8 +121,11 @@ class Interface():
             log_response(response)
         if response.status_code != 200:
             message = response.status_code
-            json = response.json()
-            if 'message' in json:
-                message = json['message']
+            try:
+                json = response.json()
+                if 'message' in json:
+                    message = json['message']
+            except JSONDecodeError:
+                message = 'No json to retrieve message from'
             raise ServerError(message, response.content)
         return response
