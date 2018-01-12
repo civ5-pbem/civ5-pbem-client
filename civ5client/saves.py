@@ -73,6 +73,7 @@ def download_save(game):
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path, response
 
+# Unfinished
 def check_kills(game, file_name=None):
     """
     Compares the game status on the server and in the save and checks if
@@ -93,7 +94,7 @@ def validate_upload_file(game, file_name=None):
     current_server = game.currently_moving_player_number()
     last_player_server = game.last_human_player_number()
     first_player_server = game.first_human_player_number()
-
+    
     # Whether the turn had been correctly done
     if last_player_server == current_server:
         if save['turn'] != turn_server+1:

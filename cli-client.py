@@ -298,6 +298,7 @@ try:
                 valid = saves.validate_upload_file(game)
                 if not valid:
                     print("Error: Turn not taken/invalid turn")
+                    exit()
             file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError as e:

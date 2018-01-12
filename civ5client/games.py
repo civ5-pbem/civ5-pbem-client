@@ -183,10 +183,7 @@ class Game():
         return i
 
     def is_validation_enabled(self):
-        if self.json['isSaveGameValidationEnabled'] == 'true':
-            return True
-        else:
-            return False
+        return self.json['isSaveGameValidationEnabled']
 
     def join(self):
         """Requests to join the game with the current account."""
