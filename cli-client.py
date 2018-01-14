@@ -95,6 +95,7 @@ def pretty_print_game(game_json, civ_json):
           "\nMap size:", game_json['mapSize'],
           "\nGame state:", game_json['gameState'],
           "\nTurn started:", game_json['lastMoveFinished'],
+          "\nTurn number:", game_json['turnNumber'],
           "\nCurrent player:", game_json['currentlyMovingPlayer'],
           "\nPlayers:")
     for player in game_json['players']:
