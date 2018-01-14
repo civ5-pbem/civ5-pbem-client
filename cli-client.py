@@ -96,6 +96,7 @@ def pretty_print_game(game_json, civ_json):
           "\nGame state:", game_json['gameState'],
           "\nTurn started:", game_json['lastMoveFinished'],
           "\nCurrent player:", game_json['currentlyMovingPlayer'],
+          "\nSave file validation:", game_json['isSaveGameValidationEnabled'],
           "\nPlayers:")
     for player in game_json['players']:
         civ = next(civ for civ in civ_json
