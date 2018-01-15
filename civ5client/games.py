@@ -198,10 +198,10 @@ class Game():
         """Requests to start a game."""
         return self.interface.post_request("/games/"+self.id+"/start")
 
-    def download(self, force=False):
+    def download(self, force=False, bar=False):
         """Downloads the save if it's your turn."""
         if self.to_move(can_host=False) or force:
-            return saves.download_save(self)
+            return saves.download_save(self, bar=bar)
         else:
             raise WrongMoveError
 

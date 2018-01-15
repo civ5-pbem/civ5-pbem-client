@@ -277,7 +277,7 @@ try:
 
     if opts['download']:
         try:
-            file_name, response = game.download(force=opts['--force'])
+            file_name, response = game.download(force=opts['--force'], bar=True)
             print("Downloaded",file_name)
             print(("Please complete your turn by loading it in hotseat mode, "
                    "performing a turn, saving it in the menu so that the next "
@@ -300,6 +300,7 @@ try:
                 if not valid:
                     print("Error: Turn not taken/invalid turn")
                     exit()
+                print("Save valid. Proceeding to upload")
             file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError as e:

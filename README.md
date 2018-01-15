@@ -9,6 +9,7 @@ The following packages need to be installed to get civ5-pbem-client up and runni
 * [Requests](http://docs.python-requests.org/en/master/)
 * [docopt](https://github.com/docopt/docopt)
 * [bitstring](https://pythonhosted.org/bitstring/)
+* [progress](https://pypi.python.org/pypi/progress)
 
 Once all of the above are installed, use [git](https://git-scm.com/downloads) to download the repository:
 ```
