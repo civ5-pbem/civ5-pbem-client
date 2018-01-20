@@ -9,6 +9,8 @@ import re
 import os
 from os.path import expanduser
 
+from progress.bar import Bar
+
 from civ5client import ServerError, InvalidConfigurationError, config_file_name, save_parser
 
 class UnknownOperatingSystemError(Exception):
@@ -56,7 +58,7 @@ def save_save_path_config(path):
     with open(config_file_name, 'w') as config_file:
         config.write(config_file)
 
-def download_save(game):
+def download_save(game, bar=False):
     """
     Downloads a game savefile from the server and saves it into the
     civilization 5 save directory from config. 
@@ -66,13 +68,26 @@ def download_save(game):
     with open(file_name, 'wb') as file_:
         response = game.interface.get_request("/games/"+game.id+"/save-game",
                                  stream=True)
+        if bar:
+            file_length = int(response.headers['Content-Length'])
+            bar = Bar('Downloading', max=100)
+            one_percent = int(file_length/100)
+            i = 0
         for chunk in response.iter_content():
             file_.write(chunk)
+            if bar:
+                i += 1
+                if i >= one_percent:
+                    bar.next()
+                    i = 0
+        if bar:
+            bar.finish()
     final_name = game.name+" "+str(game.turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     os.rename(file_name, path) # May throw OSError if already exists on windows
     return path, response
 
+# Unfinished
 def check_kills(game, file_name=None):
     """
     Compares the game status on the server and in the save and checks if
@@ -93,7 +108,7 @@ def validate_upload_file(game, file_name=None):
     current_server = game.currently_moving_player_number()
     last_player_server = game.last_human_player_number()
     first_player_server = game.first_human_player_number()
-
+    
     # Whether the turn had been correctly done
     if last_player_server == current_server:
         if save['turn'] != turn_server+1:

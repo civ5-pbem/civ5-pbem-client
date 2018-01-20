@@ -97,6 +97,7 @@ def pretty_print_game(game_json, civ_json):
           "\nTurn started:", game_json['lastMoveFinished'],
           "\nTurn number:", game_json['turnNumber'],
           "\nCurrent player:", game_json['currentlyMovingPlayer'],
+          "\nSave file validation:", game_json['isSaveGameValidationEnabled'],
           "\nPlayers:")
     for player in game_json['players']:
         civ = next(civ for civ in civ_json
@@ -277,7 +278,7 @@ try:
 
     if opts['download']:
         try:
-            file_name, response = game.download(force=opts['--force'])
+            file_name, response = game.download(force=opts['--force'], bar=True)
             print("Downloaded",file_name)
             print(("Please complete your turn by loading it in hotseat mode, "
                    "performing a turn, saving it in the menu so that the next "
@@ -299,6 +300,8 @@ try:
                 valid = saves.validate_upload_file(game)
                 if not valid:
                     print("Error: Turn not taken/invalid turn")
+                    exit()
+                print("Save valid. Proceeding to upload")
             file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError as e:

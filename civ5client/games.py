@@ -183,10 +183,7 @@ class Game():
         return i
 
     def is_validation_enabled(self):
-        if self.json['isSaveGameValidationEnabled'] == 'true':
-            return True
-        else:
-            return False
+        return self.json['isSaveGameValidationEnabled']
 
     def join(self):
         """Requests to join the game with the current account."""
@@ -201,10 +198,10 @@ class Game():
         """Requests to start a game."""
         return self.interface.post_request("/games/"+self.id+"/start")
 
-    def download(self, force=False):
+    def download(self, force=False, bar=False):
         """Downloads the save if it's your turn."""
         if self.to_move(can_host=False) or force:
-            return saves.download_save(self)
+            return saves.download_save(self, bar=bar)
         else:
             raise WrongMoveError
 
