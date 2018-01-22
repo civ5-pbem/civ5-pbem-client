@@ -30,7 +30,7 @@ def get_default_save_path():
     elif platform == "darwin":
         save_dir = "~/Documents/Aspyr/Sid Meier's Civilization 5/Saves/hotseat/"
     elif platform == "win32":
-        save_dir = "~\\My Games\\Sid Meier's Civilization 5\\Saves\\hotseat"
+        save_dir = "~\\Documents\\My Games\\Sid Meier's Civilization 5\\Saves\\hotseat"
     else:
         raise UnknownOperatingSystemError
     return expanduser(save_dir)
