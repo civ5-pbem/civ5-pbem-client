@@ -34,7 +34,7 @@ def parse_address(address):
     p = urlparse(address)
     netloc = p.netloc or p.path
     out_address = urlunparse(
-        ('http',netloc,"","","",""))
+        ('https',netloc,"","","","")) # TODO: handle non-https addresses
     return out_address
 
 def log_response(response, log_file=log_file_name, stream=False):
