@@ -12,7 +12,8 @@ Usage:
     cli-client.py (info | join | leave | start | disable-validation) <game> [--verbose]
     cli-client.py (download | upload) <game> [--force] [--verbose]
     cli-client.py kick <game> <player> [--verbose]
-    cli-client.py choose-civ <game> [<player>] <civilization> [--verbose]
+    cli-client.py choose-civ <game> <player> <civilization> [--verbose]
+    cli-client.py choose-civ <game> <civilization> [--verbose]
     cli-client.py change-player-type <game> <player> <player-type> [--verbose]
     cli-client.py (-h | --help)
     cli-client.py --version
