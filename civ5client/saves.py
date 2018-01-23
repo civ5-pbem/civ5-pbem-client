@@ -43,8 +43,10 @@ def get_config_save_path():
     if (config.has_section('Saves')
             and config.has_option('Saves', 'save_path')):
         path = config['Saves']['save_path']
-        if not path.endswith("/"):
+        if not path.endswith("/") and platform != "win32":
             path = path + "/"
+        elif not path.endswith("\\") and platform == "win32":
+            path = path + "\\"
         return path
     else:
         raise InvalidConfigurationError
