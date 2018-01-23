@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from sys import platform
 import glob
 import re
+import shutil
 import os
 from os.path import expanduser
 
@@ -84,7 +85,7 @@ def download_save(game, bar=False):
             bar.finish()
     final_name = game.name+" "+str(game.turn)+".Civ5Save"
     path = get_config_save_path()+final_name
-    os.rename(file_name, path) # May throw OSError if already exists on windows
+    shutil.move(file_name, path) # May throw OSError if already exists on windows
     return path, response
 
 # Unfinished
