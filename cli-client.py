@@ -68,6 +68,7 @@ Map sizes:
 """
 import sys
 import time
+import traceback
 
 from docopt import docopt
 from configparser import ConfigParser
@@ -117,15 +118,16 @@ try:
     #
     config = ConfigParser()
     config.read(config_file_name)
-    if not (config.has_section('Client Settings')
-            or config.has_option('Client Settings', 'response_log_name')
-            or config.has_option('Client Settings', 'log_responses')):
+    if not config.has_section('Client Settings'):
+        config.add_section('Client Settings')
+    if (not config.has_option('Client Settings', 'log_name')
+            or not config.has_option('Client Settings', 'log_responses')):
         if not opts['init']:
             print("Missing or incomplete config; attempting to fix")
-        config.add_section('Client Settings')
-        config['Client Settings']['response_log_name'] = "response_log.txt"
+        config['Client Settings']['log_name'] = "log.txt"
         config['Client Settings']['log_responses'] = "False"
         config.write(open(config_file_name, 'w'))
+    log_name = config['Client Settings']['log_name']
     #
     # Registration and credentials
     #
@@ -145,7 +147,7 @@ try:
             except account.AccountTakenError:
                 # TODO: Should be a loop asking for different emails
                 print("Error: Account already taken")
-                exit()
+                raise
             else:
                 print("An email with the access token has been sent")
         access_token = input("Write the access token from the email: ")
@@ -286,6 +288,7 @@ try:
                    "player can continue and uploading it to the server."))
         except OSError:
             print("Error: File with wanted name already exists")
+            raise
         except WrongMoveError:
             print("Error: Not your move to download")
 
@@ -300,14 +303,15 @@ try:
             if game.is_validation_enabled() and not opts['--force']:
                 valid = saves.validate_upload_file(game)
                 if not valid:
-                    print("Error: Turn not taken/invalid turn")
-                    exit()
+                    print(("Error: Turn not taken/invalid turn. If it's a "
+                           "client error, try --force"))
                 print("Save valid. Proceeding to upload")
             file_name, response = game.upload()
             print("Uploaded and removed", file_name, "without errors")
         except MissingSaveFileError as e:
             print("Error: Save file", e.args[0], "not found. Please rename",
                   "the file if it exists under a different name")
+            raise
         except WrongMoveError:
             print("Error: Not your move to upload")
 
@@ -319,6 +323,7 @@ try:
 
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
+    traceback.print_exc(file=open(log_name,'a'))
 except InvalidReferenceNumberError:
     print("Error: No game or player with such reference number")
 except InvalidIdError:
@@ -328,3 +333,6 @@ except ServerError as e:
         print("Server error:", e.args[0], "\n", e.args[1])
     else:
         print("Server error:", e.args[0])
+    traceback.print_exc(file=open(log_name,'a'))
+except:
+    traceback.print_exc(file=open(log_name,'a'))

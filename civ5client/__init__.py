@@ -18,9 +18,12 @@ config = ConfigParser()
 config.read(config_file_name)
 if not config.has_section('Client Settings'):
     config.add_section('Client Settings')
-    config['Client Settings']['response_log_name'] = "response_log.txt"
+
+if (not config.has_option('Client Settings', 'log_name')
+        or not config.has_option('Client Settings', 'log_responses')):
+    config['Client Settings']['log_name'] = "log.txt"
     config['Client Settings']['log_responses'] = "False"
-log_file_name = config['Client Settings']['response_log_name']
+log_file_name = config['Client Settings']['log_name']
 log_responses = (config['Client Settings']['log_responses'].lower() == "true")
 
 class InvalidConfigurationError(Exception):
