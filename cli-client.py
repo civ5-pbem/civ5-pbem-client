@@ -311,7 +311,10 @@ try:
                            "client error, try --force"))
                 print("Save valid. Proceeding to upload")
             file_name, response = game.upload()
-            print("Uploaded and removed", file_name, "without errors")
+            if config['Saves']['delete_saves'].lower() == 'true':
+                print("Uploaded and removed", file_name, "without errors")
+            else:
+                print("Uploaded", file_name, "without errors")
         except MissingSaveFileError as e:
             print("Error: Save file", e.args[0], "not found. Please rename",
                   "the file if it exists under a different name")
