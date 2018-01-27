@@ -156,5 +156,10 @@ def upload_save(game, file_name=None):
     files = {'file':open(file_name, 'rb')}
     response = game.interface.post_request("/games/"+game.id+"/finish-turn",
                                            files=files)
-    os.remove(file_name)
+    config = ConfigParser()
+    config.read(config_file_name)
+    if (config.has_section('Saves')
+            and config.has_option('Saves', 'delete_saves')):
+        if config['Saves']['delete_saves'].lower() == 'true':
+            os.remove(file_name)
     return file_name, response

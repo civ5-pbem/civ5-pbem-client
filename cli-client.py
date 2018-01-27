@@ -187,6 +187,10 @@ try:
                           " Civilizations 5 hotseat save directory path: "))
         print("Saving save directory path to config")
         saves.save_save_path_config(path)
+    # If no delete_saves option found, create it and make it True
+    if not config.has_option('Saves', 'delete_saves'):
+        config['Saves']['delete_saves'] = 'True'
+        config.write(open(config_file_name, 'w'))
     #
     # Commands
     #
@@ -336,3 +340,4 @@ except ServerError as e:
     traceback.print_exc(file=open(log_name,'a'))
 except:
     traceback.print_exc(file=open(log_name,'a'))
+    raise
