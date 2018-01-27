@@ -82,7 +82,7 @@ from civ5client.games import InvalidReferenceNumberError, WrongMoveError, Invali
 from civ5client.saves import MissingSaveFileError
 
 opts = docopt(__doc__, help=True, version=("civ5client command line interface "
-                                           "beta"))
+                                           "v0.1.0"))
 
 def yes_no_question(question):
     answer = input(question+" [y/n]: ")
