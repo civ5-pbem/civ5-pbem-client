@@ -6,15 +6,15 @@ Script to make full use of the civ5client package to play Civilization 5 in
 a play-by-email fashion in connection with a dedicated civ5-pbem-server.
 
 Usage:
-    cli-client.py init [--verbose]
-    cli-client.py new-game <game-name> <game-description> <map-size> [--verbose]
-    cli-client.py (list | list-civs) [--verbose]
-    cli-client.py (info | join | leave | start | disable-validation) <game> [--verbose]
-    cli-client.py (download | upload) <game> [--force] [--verbose]
-    cli-client.py kick <game> <player> [--verbose]
-    cli-client.py choose-civ <game> <player> <civilization> [--verbose]
-    cli-client.py choose-civ <game> <civilization> [--verbose]
-    cli-client.py change-player-type <game> <player> <player-type> [--verbose]
+    cli-client.py init 
+    cli-client.py new-game <game-name> <game-description> <map-size> 
+    cli-client.py (list | list-civs) 
+    cli-client.py (info | join | leave | start | disable-validation) <game> 
+    cli-client.py (download | upload) <game> [--force] 
+    cli-client.py kick <game> <player> 
+    cli-client.py choose-civ <game> <player> <civilization> 
+    cli-client.py choose-civ <game> <civilization> 
+    cli-client.py change-player-type <game> <player> <player-type> 
     cli-client.py (-h | --help)
     cli-client.py --version
 
@@ -24,7 +24,6 @@ Usage:
 Commands:
     -h --help               Show this
     --version               Show version
-    --verbose               Prints out the contents of the http response
     --force                 Forces an attempt to perform an action without
                             clientside validation
 
@@ -157,7 +156,6 @@ try:
     try:
         response = account.request_credentials(interface)
         json = response.json()
-        content = response.content
         if opts['init']:
             print("Logged in as", json['username'],
                   "with email", json['email'])
@@ -168,8 +166,6 @@ try:
                "is broken or configuration is wrong. Check server_address "
                "and access_token in config.ini, or remove it to configure "
                "again."))
-        if opts['--verbose']:
-            print(e.__class__, ":", e.args[0])
     #
     # Confirm we have a save directory path in config
     #
@@ -201,7 +197,6 @@ try:
                                         opts['<game-name>'],
                                         opts['<game-description>'],
                                         opts['<map-size>'].upper())
-            content = response.content
             json = response.json()
         except ValueError:
             print("Error: Wrong map size. Check -h for possible")
@@ -212,7 +207,6 @@ try:
 
     if opts['list']:
         json, response = games.list_games(interface)
-        content = response.content
         for j in json:
             string = '{:3}) ID: {}\tName: {:12}\tHost: {:12}'.format(
                 j['ref_number'], j['id'], j['name'], j['host'])
@@ -223,7 +217,6 @@ try:
 
     if opts['list-civs']:
         response = games.get_civilizations(interface)
-        content = response.content
         json = response.json()
         base_string = "{:8}\t{:8}\t{:8}"
         print(base_string.format("Code", "Name", "Leader"))
@@ -240,7 +233,6 @@ try:
 
     if opts['info']:
         response = games.get_civilizations(interface)
-        content = response.content
         json = response.json()
         pretty_print_game(game.json, json)
 
@@ -248,30 +240,29 @@ try:
         try:
             response = game.join()
             civ_json = games.get_civilizations(interface).json()
-            content = response.content
             json = response.json()
             pretty_print_game(json, civ_json)
         except ServerError:
             print("Error: Failed to join game. Presumably you are already in it")
-            exit()
+            raise
 
     if opts['leave']:
-        content = game.leave().content
+        game.leave()
 
     if opts['kick']:
-        content = player.kick().content
+        player.kick()
 
     if opts['start']:
-        content = game.start().content
+        game.start()
         print("Game started. Please perform the first turn, save the game as",
               game.name, "and upload it with the upload command")
 
     if opts['disable-validation']:
-        content = game.disable_validation().content
+        game.disable_validation()
 
     if opts['change-player-type']:
         try:
-            content = player.change_type(opts['<player-type>']).content
+            player.change_type(opts['<player-type>'])
         except ValueError:
             print("Error: Wrong player type")
 
@@ -279,7 +270,7 @@ try:
         if not opts['<player>']:
             player = games.Player.from_id(game, game.find_own_player_id())
         try:
-            content = player.choose_civilization(opts['<civilization>']).content
+            player.choose_civilization(opts['<civilization>'])
         except ValueError:
             print("Error: Wrong civilization. list-civs to list acceptable civs")
 
@@ -322,12 +313,6 @@ try:
         except WrongMoveError:
             print("Error: Not your move to upload")
 
-    if opts['--verbose']:
-        try:
-            print("Response content:\n", content)
-        except NameError:
-            print("No content to print")
-
 except requests.exceptions.ConnectionError:
     print("Error: Failed to connect to server")
     traceback.print_exc(file=open(log_name,'a'))
@@ -336,10 +321,9 @@ except InvalidReferenceNumberError:
 except InvalidIdError:
     print("Error: No game or player with such an id")
 except ServerError as e:
-    if opts['--verbose']:
-        print("Server error:", e.args[0], "\n", e.args[1])
-    else:
-        print("Server error:", e.args[0])
+    print("Server error:", e.args[0])
+    print("For contents of the response, please enable response logging in the"
+          " config and try again.")
     traceback.print_exc(file=open(log_name,'a'))
 except:
     traceback.print_exc(file=open(log_name,'a'))
