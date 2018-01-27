@@ -9,7 +9,8 @@ Usage:
     cli-client.py init 
     cli-client.py new-game <game-name> <game-description> <map-size> 
     cli-client.py (list | list-civs) 
-    cli-client.py (info | join | leave | start | disable-validation) <game> 
+    cli-client.py info <game> [--verbose]
+    cli-client.py (join | leave | start | disable-validation) <game>
     cli-client.py (download | upload) <game> [--force] 
     cli-client.py kick <game> <player> 
     cli-client.py choose-civ <game> <player> <civilization> 
@@ -26,6 +27,7 @@ Commands:
     --version               Show version
     --force                 Forces an attempt to perform an action without
                             clientside validation
+    --verbose, -v           Prints more information
 
     init                    Checks configuration and completes it if incomplete. 
                             It is ran whenever any other command is used regardless.
@@ -36,7 +38,8 @@ Commands:
     list                    Prints a list of existing games
     list-civs               Prints a list of allowed civs
         
-    info                    Prints detailed information about a game
+    info                    Prints information about a game
+
     join                    Requests to join a game
     leave                   Requests to leave a game
     kick                    Requests to kick a player
@@ -88,28 +91,35 @@ def yes_no_question(question):
     else:
         return False
 
-def pretty_print_game(game_json, civ_json):
-    print("ID:", game_json['id'],
-          "\nName:", game_json['name'],
-          "\nHost:", game_json['host'],
-          "\nDescription:", game_json['description'],
-          "\nMap size:", game_json['mapSize'],
-          "\nGame state:", game_json['gameState'],
-          "\nTurn started:", game_json['lastMoveFinished'],
-          "\nTurn number:", game_json['turnNumber'],
-          "\nCurrent player:", game_json['currentlyMovingPlayer'],
-          "\nSave file validation:", game_json['isSaveGameValidationEnabled'],
-          "\nPlayers:")
-    for player in game_json['players']:
-        civ = next(civ for civ in civ_json
-                          if civ['code'] == player['civilization'])
-        civ_string = civ['code']+" - "+civ['leader']+" - "+civ['name']
-        print("\tID:", player['id'],
-              "\n\t\tUser:", player['humanUserAccount'],
-              "\n\t\tNumber:", player['playerNumber'],
-              "\n\t\tCivilization:", civ_string,
-              "\n\t\tPlayer Type:", player['playerType'])
-    print("Number of city states:", game_json['numberOfCityStates'])
+def pretty_print_game(game_json, civ_json, short=False):
+    if not short:
+        print("ID:", game_json['id'],
+              "\nName:", game_json['name'],
+              "\nHost:", game_json['host'],
+              "\nDescription:", game_json['description'],
+              "\nMap size:", game_json['mapSize'],
+              "\nGame state:", game_json['gameState'],
+              "\nTurn started:", game_json['lastMoveFinished'],
+              "\nTurn number:", game_json['turnNumber'],
+              "\nCurrent player:", game_json['currentlyMovingPlayer'],
+              "\nSave file validation:", game_json['isSaveGameValidationEnabled'],
+              "\nPlayers:")
+        for player in game_json['players']:
+            civ = next(civ for civ in civ_json
+                              if civ['code'] == player['civilization'])
+            civ_string = civ['code']+" - "+civ['leader']+" - "+civ['name']
+            print("\tID:", player['id'],
+                  "\n\t\tUser:", player['humanUserAccount'],
+                  "\n\t\tNumber:", player['playerNumber'],
+                  "\n\t\tCivilization:", civ_string,
+                  "\n\t\tPlayer Type:", player['playerType'])
+        print("Number of city states:", game_json['numberOfCityStates'])
+    else:
+        print("Name:", game_json['name'],
+              "\nHost:", game_json['host'],
+              "\nDescription:", game_json['description'],
+              "\nTurn number:", game_json['turnNumber'],
+              "\nCurrent player:", game_json['currentlyMovingPlayer'])
 
 try:
     #
@@ -234,7 +244,8 @@ try:
     if opts['info']:
         response = games.get_civilizations(interface)
         json = response.json()
-        pretty_print_game(game.json, json)
+        short = not opts['--verbose']
+        pretty_print_game(game.json, json, short=short)
 
     if opts['join']:
         try:
