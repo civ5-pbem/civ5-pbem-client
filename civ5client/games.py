@@ -205,10 +205,10 @@ class Game():
         else:
             raise WrongMoveError
 
-    def upload(self):
+    def upload(self, bar=False):
         """Uploads the save and finishes the turn."""
         if self.to_move():
-            return saves.upload_save(self)
+            return saves.upload_save(self, bar=bar)
         else:
             raise WrongMoveError
 

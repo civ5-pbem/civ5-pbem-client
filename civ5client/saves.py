@@ -10,7 +10,7 @@ import shutil
 import os
 from os.path import expanduser
 
-from progress.bar import Bar
+from tqdm import tqdm
 
 from civ5client import ServerError, InvalidConfigurationError, config_file_name, save_parser
 
@@ -71,20 +71,13 @@ def download_save(game, bar=False):
     with open(file_name, 'wb') as file_:
         response = game.interface.get_request("/games/"+game.id+"/save-game",
                                  stream=True)
+        iterator = response.iter_content()
         if bar:
-            file_length = int(response.headers['Content-Length'])
-            bar = Bar('Downloading', max=100)
-            one_percent = int(file_length/100)
-            i = 0
-        for chunk in response.iter_content():
+            iterator = tqdm(iterator, desc="Downloading",
+                            total=int(response.headers['Content-Length']),
+                            unit_scale=True)
+        for chunk in iterator:
             file_.write(chunk)
-            if bar:
-                i += 1
-                if i >= one_percent:
-                    bar.next()
-                    i = 0
-        if bar:
-            bar.finish()
     final_name = game.name+" "+str(game.turn)+".Civ5Save"
     path = get_config_save_path()+final_name
     shutil.move(file_name, path) # May throw OSError if already exists on windows
@@ -145,7 +138,7 @@ def confirm_password(game, file_name=None):
         return True
     return False
 
-def upload_save(game, file_name=None):
+def upload_save(game, file_name=None, bar=False):
     """
     Uploads a savefile from the civilization 5 save directory corresponding to
     the game (i.e. starting with the name of the game) and removes the file.
@@ -153,9 +146,10 @@ def upload_save(game, file_name=None):
     """
     if file_name is None:
         file_name = select_upload_file(game)
-    files = {'file':open(file_name, 'rb')}
+    file_ = open(file_name, 'rb')
+    files = {'file':file_}
     response = game.interface.post_request("/games/"+game.id+"/finish-turn",
-                                           files=files)
+                                           files=files, bar=bar)
     config = ConfigParser()
     config.read(config_file_name)
     if (config.has_section('Saves')

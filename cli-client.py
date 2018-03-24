@@ -300,7 +300,7 @@ try:
 
     if opts['upload']:
         try:
-            if not saves.confirm_password(game):
+            if not opts['--force'] and not saves.confirm_password(game):
                 print("Warning: Password not set. You should download the save again and set it")
                 if not yes_no_question(
                         ("Are you sure you want to continue and upload it "
@@ -312,7 +312,7 @@ try:
                     print(("Error: Turn not taken/invalid turn. If it's a "
                            "client error, try --force"))
                 print("Save valid. Proceeding to upload")
-            file_name, response = game.upload()
+            file_name, response = game.upload(bar=True)
             if config['Saves']['delete_saves'].lower() == 'true':
                 print("Uploaded and removed", file_name, "without errors")
             else:

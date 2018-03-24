@@ -8,6 +8,8 @@ import time
 from json.decoder import JSONDecodeError
 from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
+from tqdm import tqdm
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import requests
 
 # config initialization
@@ -112,12 +114,28 @@ class Interface():
             raise ServerError(message, response.content)
         return response
     
-    def post_request(self, path, json=None, files=None, log=log_responses):
-        response = requests.post(
-            urljoin(self.server_address, path),
-            json=json,
-            files=files,
-            headers={"Access-Token":self.access_token})
+    def post_request(self, path, json=None, files=None, log=log_responses, bar=False):
+        if files is not None and bar:
+            _files_dict = {
+                    key: (key, file_, 'text/plain') for key, file_ in files.items()}
+            encoder = MultipartEncoder(_files_dict)
+            with tqdm(total=encoder.len, 
+                      unit_scale=True, desc='Uploading') as tqdm_bar:
+                monitor = MultipartEncoderMonitor(encoder, 
+                        lambda monitor: tqdm_bar.update(
+                            monitor.bytes_read - tqdm_bar.n))
+                response = requests.post(
+                    urljoin(self.server_address, path),
+                    json=json,
+                    data=monitor,
+                    headers={"Access-Token": self.access_token,
+                             "Content-Type": monitor.content_type})
+        else:
+            response = requests.post(
+                urljoin(self.server_address, path),
+                json=json,
+                files=files,
+                headers={"Access-Token":self.access_token})
         if log:
             log_response(response)
         if response.status_code != 200:
