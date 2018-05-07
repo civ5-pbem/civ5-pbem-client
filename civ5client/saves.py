@@ -147,9 +147,10 @@ def upload_save(game, file_name=None, bar=False):
     if file_name is None:
         file_name = select_upload_file(game)
     file_ = open(file_name, 'rb')
-    files = {'file':file_}
-    response = game.interface.post_request("/games/"+game.id+"/finish-turn",
-                                           files=files, bar=bar)
+    with open(file_name, 'rb') as file_:
+        files = {'file':file_}
+        response = game.interface.post_request(
+            "/games/"+game.id+"/finish-turn", files=files, bar=bar)
     config = ConfigParser()
     config.read(config_file_name)
     if (config.has_section('Saves')
