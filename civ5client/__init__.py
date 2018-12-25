@@ -4,8 +4,12 @@ civ5client
 Package to interact with civ5-pbem-server by http requests.
 """
 import time
+import sys
 
-from json.decoder import JSONDecodeError
+if sys.version_info.major == 3 and sys.version_info.minor < 5:
+    from simplejson.decoder import JSONDecodeError
+else:
+    from json.decoder import JSONDecodeError
 from configparser import ConfigParser
 from urllib.parse import urlparse, urlunparse, urljoin
 from tqdm import tqdm
