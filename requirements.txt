@@ -1,5 +1,5 @@
 docopt==0.6.2
-requests==2.18.4
+requests==2.21.0
 bitstring==3.1.5
 tqdm==4.19.8
 requests-toolbelt==0.8.0
