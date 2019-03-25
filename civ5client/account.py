@@ -27,3 +27,14 @@ def request_credentials(interface):
     """
     request = interface.get_request("/user-accounts/current")
     return request
+
+def reset_access_token(server_address, email, log=log_responses):
+    """Sends a request to reset the access token and send a new
+    one via mail.
+    """
+    reset_request = requests.post(
+        urljoin(server_address,"/user-accounts/reset-access-token"),
+        json={'email':email})
+    if log:
+        log_response(reset_request)
+    return reset_request
