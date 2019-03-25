@@ -16,6 +16,7 @@ Usage:
     cli-client.py choose-civ <game> <player> <civilization> 
     cli-client.py choose-civ <game> <civilization> 
     cli-client.py change-player-type <game> <player> <player-type> 
+    cli-client.py reset-access-token <email>
     cli-client.py (-h | --help)
     cli-client.py --version
 
@@ -59,6 +60,9 @@ Commands:
                             be uploaded. Meant for periods of local hotseat 
                             when all players are present to save time and get 
                             on with the game faster. Only host can do this.
+
+    reset-access-token      Sends a request to reset the access token and
+                            to have a new one sent to the email address.
 
 Map sizes:
     duel      max 2 players and 4 city states
@@ -122,21 +126,43 @@ def pretty_print_game(game_json, civ_json, short=False):
               "\nCurrent player:", game_json['currentlyMovingPlayer'])
 
 try:
+    config = ConfigParser()
+    config.read(config_file_name)
     #
     # Initial config
     #
-    config = ConfigParser()
-    config.read(config_file_name)
     if not config.has_section('Client Settings'):
         config.add_section('Client Settings')
     if (not config.has_option('Client Settings', 'log_name')
             or not config.has_option('Client Settings', 'log_responses')):
-        if not opts['init']:
+        if not opts['init'] and not opts['reset-access-token']:
             print("Missing or incomplete config; attempting to fix")
         config['Client Settings']['log_name'] = "log.txt"
         config['Client Settings']['log_responses'] = "False"
         config.write(open(config_file_name, 'w'))
     log_name = config['Client Settings']['log_name']
+    #
+    # Token reset
+    #
+    if opts['reset-access-token']:
+        try:
+            address = config['Interface Settings']['server_address']
+        except KeyError:
+            address = input("Write the server address: ")
+            address = civ5client.parse_address(address)
+        email = opts['<email>']
+        print("Sending a reset request")
+        response = account.reset_access_token(address, email)
+        if response.status_code == 200:
+            print("Reset request successful. Please check your email")
+        if response.status_code != 200:
+            if 'message' in response.json().keys():
+                print("Reset request failed. Server response:",
+                      response.json()['message'])
+            else:
+                print("Reset request failed with no message from server.",
+                      "Please make sure the address is correct")
+        exit()
     #
     # Registration and credentials
     #
